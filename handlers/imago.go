@@ -3,6 +3,7 @@ package handlers
 import (
 	"github.com/davidbyttow/govips/v2/vips"
 	"github.com/gofiber/fiber/v2"
+	"github.com/lixiang4u/imago/models"
 	"log"
 	"os"
 	"runtime"
@@ -16,65 +17,90 @@ func init() {
 
 }
 
+func parseConfig(ctx *fiber.Ctx) models.ImageConfig {
+	var config = models.ImageConfig{}
+
+	//height //width //both are in px.
+	config.With = ctx.QueryFloat("width")
+	config.Height = ctx.QueryFloat("height")
+
+	// Available options are: v(vertical), h(horizontal), b(Both vertical and horizontal)
+	config.Flip = ctx.Query("flip")
+
+	// Override quality set in dashbaord, available quality range from 10 ~ 100(100 means lossless convert)
+	config.Quality = ctx.QueryFloat("quality")
+
+	// Available blur range from 10 ~ 100
+	config.Blur = ctx.QueryFloat("blur")
+
+	// Sharpen the image, available sharpen range from 1 ~ 10
+	config.Sharpen = ctx.QueryFloat("sharpen")
+
+	// Available rotate angle range from 0 ~ 360, however if angle is not 90, 180, 270, 360, it will be filled with white background
+	config.Rotate = ctx.QueryFloat("rotate")
+
+	// Adjust brightness of the image, available range from 0 ~ 10, 1 means no change
+	config.Brightness = ctx.QueryFloat("brightness")
+
+	// Adjust saturation of the image, available range from 0 ~ 10, 1 means no change
+	config.Saturation = ctx.QueryFloat("saturation")
+
+	// Adjust hue of the image, available range from 0 ~ 360, hue will be 0 for no change, 90 for a complementary hue shift, 180 for a contrasting shift, 360 for no change again.
+	config.Hue = ctx.QueryFloat("hue")
+
+	// Adjust contrast of the image, available range from 0 ~ 10, 1 means no change
+	config.Contrast = ctx.QueryFloat("contrast")
+
+	//
+	config.Watermark = struct {
+		Text    string
+		Font    string
+		Color   string
+		With    float64
+		Height  float64
+		OffsetX float64
+		OffsetY float64
+		Opacity float64
+	}{}
+
+	config.Watermark.Text = ctx.Query("text")
+
+	config.Filter = ctx.Query("filter")
+
+	return config
+}
+
 func Image(ctx *fiber.Ctx) error {
 
+	var imgConfig = parseConfig(ctx)
+	var appConfig = models.AppConfig{}
+
 	// 域名映射：https://image.google.com/u/avatar.png => https://image-google.imago.com/u/avatar.png
-
-	// 当前任务相关配置
-	type Config struct {
-		//StripMetadata：表示是否去除图片的元数据（如Exif信息等）。
-		//Quality：表示图片的质量，取值范围为 1 到 100。较高的值表示更好的质量，但文件大小也会增加。
-		//Lossless：表示是否使用无损压缩。如果设置为 true，则不会对图片进行任何有损压缩，保持完全的像素精度；如果设置为 false，则会应用有损压缩以减小文件大小。
-		//NearLossless：表示是否使用近似无损压缩。如果设置为 true，则会应用一定程度的有损压缩，但保持较高的视觉质量；如果设置为 false，则不会应用近似无损压缩。
-		//ReductionEffort：表示压缩的努力程度。取值范围为 0 到 6，0 表示最快压缩速度但压缩率较低，6 表示最慢压缩速度但压缩率较高。
-		Quality         int
-		Lossless        bool
-		NearLossless    bool
-		ReductionEffort int
-	}
-	var conf = Config{
-		Quality:         80,
-		Lossless:        false,
-		NearLossless:    true,
-		ReductionEffort: 0,
-	}
-
 	var p = vips.NewImportParams()
 	p.FailOnError.Set(true)
-	p.AutoRotate.Set(false)
+	p.AutoRotate.Set(true)
 
-	img, err := vips.LoadImageFromFile("./images/cbh.png", p)
+	img, err := vips.LoadImageFromFile("/apps/repo/imago/images/cbh.png", p)
 	if err != nil {
 		log.Println("[err]", err.Error())
 		return err
 	}
 	defer img.Close()
 
-	//options := webp.Options{Lossless: false}
-	var buf []byte
+	img = ImageFilter(img, imgConfig, appConfig)
 
-	switch img.Format() {
-	case vips.ImageTypeAVIF:
-		fallthrough
-	case vips.ImageTypePNG:
-		fallthrough
-	case vips.ImageTypeBMP:
-		fallthrough
-	case vips.ImageTypeJPEG:
-		fallthrough
-	default:
-		// If some special images cannot encode with default ReductionEffort(0), then retry from 0 to 6
-		var ep = vips.WebpExportParams{
-			StripMetadata:   true,
-			Quality:         conf.Quality,
-			Lossless:        conf.Lossless,
-			NearLossless:    conf.NearLossless,
-			ReductionEffort: conf.ReductionEffort,
-		}
-		buf, _, err = img.ExportWebp(&ep)
+	buf, meta, err := ExportImage(img, img.Format(), models.ExportConfig{
+		StripMetadata: true,
+		Quality:       80,
+		Lossless:      false,
+	})
+	if err != nil {
+		log.Println("[err]", err.Error())
+		return err
 	}
+	log.Println("[meta.Format]", meta.Format)
 
-	if err = os.WriteFile("output.jpg", buf, 0600); err != nil {
+	if err = os.WriteFile("output-11.jpg", buf, 0600); err != nil {
 		return err
 	}
 
