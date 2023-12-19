@@ -1,14 +1,29 @@
 package models
 
-type SiteMap struct {
-	OriginSite  string // 原始域名（原图域）
-	RewriteSite string // 新域名（新图域）
-	LocalPath   string // 本地位置（原图本地位置）
-}
+import (
+	"github.com/patrickmn/go-cache"
+	"time"
+)
+
+var (
+	Empty      = ""
+	Local      = "local"
+	MetaRoot   = "./meta"   //元数据数据存储路径
+	RemoteRoot = "./remote" //远程图片原图存储目录
+	OutputRoot = "./output" // 压缩等操作后的图片文件
+	LocalCache = cache.New(5*time.Minute, 10*time.Minute)
+	ImageTypes = []string{"jpg", "png", "jpeg", "bmp", "gif", "svg", "heic"}
+
+	SUPPORT_TYPE_RAW  = "raw"
+	SUPPORT_TYPE_WEBP = "webp"
+	SUPPORT_TYPE_AVIF = "avif"
+	SUPPORT_TYPE_JPG  = "jpg"
+)
 
 type AppConfig struct {
-	Id   int64
-	Name string
+	UserId     string // 用户ID
+	OriginSite string //原始域名（原图域）
+	LocalPath  string //本地位置（原图本地位置）
 }
 
 // 当前任务相关配置
@@ -26,6 +41,9 @@ type ExportConfig struct {
 }
 
 type ImageConfig struct {
+	HttpAccept string
+	HttpUA     string
+	Src        string
 	With       float64
 	Height     float64
 	Flip       string
@@ -48,4 +66,21 @@ type ImageConfig struct {
 		Opacity float64
 	}
 	Filter string
+}
+
+type FileMeta struct {
+	Id      string // 文件ID
+	Origin  string // local/用户配置的原创图片域名
+	Url     string // 本地路径/远程URL
+	Version string // 文件版本？
+}
+
+type LocalMeta struct {
+	Id          string
+	Origin      string
+	Remote      bool
+	Ext         string
+	RemoteLocal string
+	Raw         string
+	Size        int64
 }
