@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/cespare/xxhash/v2"
+	"reflect"
 )
 
 func ToJsonString(v interface{}, pretty bool) string {
@@ -22,4 +23,36 @@ func HashString(data string) string {
 
 func CompressRate(rawSize, convertedSize int64) string {
 	return fmt.Sprintf(`%.2f%%`, 100.0-float64(convertedSize)*100/float64(rawSize))
+}
+
+func IsDefaultObj(obj interface{}) bool {
+	v := reflect.ValueOf(obj)
+	t := v.Type()
+	for i := 0; i < t.NumField(); i++ {
+		//field := t.Field(i)
+		value := v.Field(i)
+
+		if !IsDefaultValue(value.Interface()) {
+			return false
+		}
+	}
+	return true
+}
+func IsDefaultValue(value interface{}) bool {
+	switch value := value.(type) {
+	case string:
+		return value == ""
+	case int:
+		return value == 0
+	case float32:
+		return value == 0
+	case float64:
+		return value == 0
+	case bool:
+		return value == false
+	case []string:
+		return len(value) == 0
+	default:
+		return false
+	}
 }

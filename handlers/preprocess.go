@@ -123,10 +123,14 @@ func HandleToLocalPath(ctx *fiber.Ctx, imgConfig *models.ImageConfig, appConfig 
 	}
 
 	var id = utils.HashString(fmt.Sprintf("%s,%s", rawFile, appConfig.OriginSite))
+	var featureId = "default"
+	if !utils.IsDefaultObj(imgConfig) {
+		featureId = utils.HashString(fmt.Sprintf("%v", imgConfig))[:6]
+	}
 
 	localMeta = models.LocalMeta{
 		Id:          id,
-		FeatureId:   utils.HashString(fmt.Sprintf("%v", imgConfig))[:6],
+		FeatureId:   featureId,
 		Remote:      remote,
 		Origin:      originHost,
 		Ext:         fileExt,
