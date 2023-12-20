@@ -47,6 +47,7 @@ type ExportConfig struct {
 type ImageConfig struct {
 	HttpAccept   string   `json:"http_accept" form:"http_accept"`     // 特殊字段，从http头获取
 	HttpUA       string   `json:"http_ua" form:"http_ua"`             // 特殊字段，从http头获取
+	XAutoRotate  bool     `json:"x_auto_rotate" form:"x_auto_rotate"` // 特殊字段，是否AutoRotate
 	Src          string   `json:"src" form:"src"`                     // 特殊字段，表示目标图片url
 	Refresh      int      `json:"refresh" form:"refresh"`             // 特殊字段，1.表示强制回源，0.默认不强制回源
 	Width        float64  `json:"width" form:"width"`                 // 图片resize的宽度

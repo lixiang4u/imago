@@ -153,11 +153,11 @@ func ConvertImage(
 		return
 	}
 
-	log.Println("[converting]", rawFile, "=>", convertedFile, format)
-
 	var p = vips.NewImportParams()
 	p.FailOnError.Set(true)
-	p.AutoRotate.Set(true)
+	if imgConfig.XAutoRotate {
+		p.AutoRotate.Set(true)
+	}
 
 	img, err := vips.LoadImageFromFile(rawFile, p)
 	if err != nil {
@@ -165,6 +165,8 @@ func ConvertImage(
 		return converted, 0, err
 	}
 	defer img.Close()
+
+	log.Println("[converting]", rawFile, "=>", convertedFile, format, "=>", img.Format().FileExt())
 
 	img = ImageFilter(img, imgConfig)
 

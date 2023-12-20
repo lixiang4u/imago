@@ -72,12 +72,7 @@ func Shrink(ctx *fiber.Ctx) error {
 		"MIME": utils.GetFileMIME(localMeta.Raw),
 	}, false))
 
-	var convertedFile = fmt.Sprintf(
-		"%s.%s.%s",
-		utils.GetOutputFilePath(localMeta.Id, localMeta.Origin, localMeta.Ext),
-		localMeta.FeatureId,
-		localMeta.Ext,
-	)
+	var convertedFile = fmt.Sprintf("%s.%s.%s", localMeta.Raw, localMeta.FeatureId, localMeta.Ext)
 
 	if utils.FileExists(convertedFile) {
 		var _size = utils.FileSize(convertedFile)
@@ -90,6 +85,7 @@ func Shrink(ctx *fiber.Ctx) error {
 		})
 	}
 
+	imgConfig.XAutoRotate = true
 	_converted, _size, err := ConvertImage(
 		localMeta.Raw,
 		convertedFile,
