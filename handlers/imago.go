@@ -204,7 +204,7 @@ func ConvertImage(
 		log.Println("[export image]", err.Error())
 		return converted, 0, err
 	}
-	log.Println("[export image]", format, rawFile)
+	log.Println("[export image]", rawFile, "=>", convertedFile)
 
 	if err := os.WriteFile(convertedFile, buf, 0600); err != nil {
 		log.Println("[export save]", err.Error())
