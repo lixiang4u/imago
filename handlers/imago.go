@@ -61,7 +61,7 @@ func Image(ctx *fiber.Ctx) error {
 
 	// 源文件不存在
 	if !utils.FileExists(localMeta.RemoteLocal) {
-		utils.RemoveMeta(localMeta.Id, localMeta.Origin)
+		//utils.RemoveMeta(localMeta.Id, localMeta.Origin)
 		_ = ctx.Send([]byte("raw file not found"))
 		_ = ctx.SendStatus(404)
 		return nil

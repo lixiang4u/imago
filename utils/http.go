@@ -2,6 +2,7 @@ package utils
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/lixiang4u/imago/models"
 	"log"
 	"net/http"
 )
@@ -11,7 +12,14 @@ func GetResourceVersion(requestUrl string, keys []string) string {
 	if len(keys) == 0 {
 		keys = []string{"Etag", "Content-Length", "Content-Type"}
 	}
-	resp, err := http.Head(requestUrl)
+	req, err := http.NewRequest("HEAD", requestUrl, nil)
+	if err != nil {
+		log.Println("[http.head]", err.Error())
+		return ""
+	}
+	req.Header.Set("User-Agent", models.UserAgent)
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		log.Println("[http.head]", err.Error())
 		return ""

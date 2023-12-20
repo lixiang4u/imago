@@ -15,6 +15,7 @@ var (
 	MAX_UPLOAD = 1 * 1024 * 1024 * 100 // 最大上传文件大小
 	LocalCache = cache.New(5*time.Minute, 10*time.Minute)
 	ImageTypes = []string{"jpg", "png", "jpeg", "bmp", "gif", "svg", "heic"}
+	UserAgent  = "Imago Service/1.0 (89f882e4f6ce47b8)"
 
 	SUPPORT_TYPE_RAW    = "raw"
 	SUPPORT_TYPE_WEBP   = "webp"

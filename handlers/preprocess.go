@@ -18,7 +18,14 @@ import (
 )
 
 func downloadFile(remotePath, localPath string) error {
-	resp, err := http.Get(remotePath)
+	req, err := http.NewRequest("GET", remotePath, nil)
+	if err != nil {
+		log.Println("[download error0]", remotePath, err.Error())
+		return err
+	}
+	req.Header.Set("User-Agent", models.UserAgent)
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		log.Println("[download error1]", remotePath, err.Error())
 		return err
@@ -53,13 +60,13 @@ func downloadFile(remotePath, localPath string) error {
 	return nil
 }
 
-func CheckFileAllowed(fileName string) (ext string, ok bool) {
+func CheckFileAllowed(fileName string) (pathUri, ext string, ok bool) {
 	u, _ := url.Parse(fileName)
 	ext = strings.ToLower(strings.TrimPrefix(path.Ext(u.Path), "."))
 	if slices.Contains(models.ImageTypes, ext) {
-		return ext, true
+		return u.Path, ext, true
 	}
-	return ext, false
+	return u.Path, ext, false
 }
 
 func CheckSupported(httpAccept, httpUA string) map[string]bool {
@@ -103,7 +110,7 @@ func HandleToLocalPath(ctx *fiber.Ctx, imgConfig *models.ImageConfig, appConfig 
 	var requestUri = string(ctx.Request().RequestURI())
 	var localMeta models.LocalMeta
 
-	fileExt, ok := CheckFileAllowed(requestUri)
+	pathUri, fileExt, ok := CheckFileAllowed(requestUri)
 	if !ok {
 		return localMeta, errors.New("file type not support")
 	}
@@ -116,20 +123,12 @@ func HandleToLocalPath(ctx *fiber.Ctx, imgConfig *models.ImageConfig, appConfig 
 		}
 		originHost = tmpUrl.Host
 
-		tmpUrl, err = url.Parse(requestUri)
-		if err != nil {
-			rawFileClean = requestUri
-		} else {
-			rawFileClean = tmpUrl.Path
-		}
-
 		rawFile = fmt.Sprintf("%s/%s", strings.TrimRight(appConfig.OriginSite, "/"), strings.TrimLeft(requestUri, "/"))
 		if appConfig.Refresh == 1 {
 			rawVersion = utils.GetResourceVersion(rawFile, nil)
 		}
 	} else {
-		rawFile = path.Join(appConfig.LocalPath, requestUri)
-		rawFileClean = rawFile
+		rawFile = path.Join(appConfig.LocalPath, pathUri) // 不能使用带参数的uri路径
 	}
 
 	var id = utils.HashString(fmt.Sprintf("%s,%s", appConfig.OriginSite, rawFileClean))
