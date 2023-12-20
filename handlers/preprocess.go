@@ -147,12 +147,12 @@ func HandleToLocalPath(ctx *fiber.Ctx, appConfig *models.AppConfig) (models.Loca
 	localMeta.RemoteLocal = utils.GetRemoteLocalFilePath(id, originHost, fileExt)
 
 	// 如果不需要refresh且文件存在，直接返回
-	if rawVersion == models.Empty && utils.FileExists(localMeta.RemoteLocal) {
+	if appConfig.Refresh == 0 && utils.FileExists(localMeta.RemoteLocal) {
 		localMeta.Size = utils.FileSize(localMeta.RemoteLocal)
 		return localMeta, nil
 	}
 	// 如果需要refresh且版本未变化，直接返回
-	if rawVersion != models.Empty && meta.Version == rawVersion {
+	if appConfig.Refresh != 0 && meta.Version == rawVersion {
 		localMeta.Size = utils.FileSize(localMeta.RemoteLocal)
 		return localMeta, nil
 	}
