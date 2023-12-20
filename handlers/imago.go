@@ -8,6 +8,7 @@ import (
 	"github.com/lixiang4u/imago/utils"
 	"log"
 	"os"
+	"path"
 	"runtime"
 	"sync"
 )
@@ -113,7 +114,7 @@ func Image(ctx *fiber.Ctx) error {
 		return nil
 	}
 
-	convertedFile, convertedSize, ok := ConvertAndGetSmallestImage(localMeta.RemoteLocal, localMeta.Size, supported, &imgConfig, &appConfig, &exportConfig)
+	convertedFile, convertedSize, ok := ConvertAndGetSmallestImage(localMeta, supported, &imgConfig, &appConfig, &exportConfig)
 	if !ok {
 		_ = ctx.Send([]byte("convert failed"))
 		_ = ctx.SendStatus(404)
@@ -129,16 +130,15 @@ func Image(ctx *fiber.Ctx) error {
 }
 
 func ConvertAndGetSmallestImage(
-	rawFile string,
-	rawSize int64,
+	localMeta models.LocalMeta,
 	supported map[string]bool,
 	imgConfig *models.ImageConfig,
 	appConfig *models.AppConfig,
 	exportConfig *models.ExportConfig,
 ) (convertedFile string, size int64, ok bool) {
 	// 默认源文件最小，但是也可能压缩后的问题比源文件还大（源文件是压缩文件会导致再次压缩会变大）
-	size = rawSize
-	convertedFile = rawFile
+	size = localMeta.Size
+	convertedFile = localMeta.RemoteLocal
 
 	var wg sync.WaitGroup
 	for fileType, ok := range supported {
@@ -156,7 +156,14 @@ func ConvertAndGetSmallestImage(
 			wg.Add(1)
 			go func(rawFile, fileType string) {
 				defer wg.Done()
-				_converted, _size, err := ConvertImage(rawFile, fmt.Sprintf("%s.c.%s", rawFile, fileType), fileType, imgConfig, appConfig, exportConfig)
+				_converted, _size, err := ConvertImage(
+					rawFile,
+					fmt.Sprintf("%s.%s", utils.GetOutputFilePath(localMeta.Id, localMeta.Origin, localMeta.Ext), fileType),
+					fileType,
+					imgConfig,
+					appConfig,
+					exportConfig,
+				)
 				if err != nil {
 					log.Println("[convert image]", err.Error())
 					return
@@ -165,7 +172,7 @@ func ConvertAndGetSmallestImage(
 					size = _size
 					convertedFile = _converted
 				}
-			}(rawFile, fileType)
+			}(localMeta.RemoteLocal, fileType)
 		}
 	}
 	wg.Wait()
@@ -185,6 +192,13 @@ func ConvertImage(
 	if utils.FileExists(convertedFile) {
 		return converted, utils.FileSize(convertedFile), nil
 	}
+
+	if err = os.MkdirAll(path.Dir(convertedFile), 0666); err != nil {
+		log.Println("[convert mkdir]", path.Dir(convertedFile), err.Error())
+		return
+	}
+
+	log.Println("[converting]", rawFile, "=>", convertedFile, format)
 
 	var p = vips.NewImportParams()
 	p.FailOnError.Set(true)
