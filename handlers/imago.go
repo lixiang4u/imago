@@ -23,61 +23,51 @@ func init() {
 func parseConfig(ctx *fiber.Ctx) models.ImageConfig {
 	var config = models.ImageConfig{}
 
+	if err := ctx.QueryParser(&config); err != nil {
+		log.Println("[QueryParser]", err.Error())
+	}
+
+	log.Println("[QueryParser]", utils.ToJsonString(config, true))
+
 	config.HttpUA = string(ctx.Request().Header.Peek("User-Agent"))
 	config.HttpAccept = string(ctx.Request().Header.Peek("Accept"))
-
-	// 特殊字段，指定图片源地址，本地/网络地址
-	config.Src = ctx.Query("src")
-
-	// 特殊字段，表示是的需要回源
-	config.Refresh = ctx.QueryInt("refresh")
-
-	//height //width //both are in px.
-	config.With = ctx.QueryFloat("width")
-	config.Height = ctx.QueryFloat("height")
-
-	// Available options are: v(vertical), h(horizontal), b(Both vertical and horizontal)
-	config.Flip = ctx.Query("flip")
-
-	// Override quality set in dashbaord, available quality range from 10 ~ 100(100 means lossless convert)
-	config.Quality = ctx.QueryFloat("quality")
-
-	// Available blur range from 10 ~ 100
-	config.Blur = ctx.QueryFloat("blur")
-
-	// Sharpen the image, available sharpen range from 1 ~ 10
-	config.Sharpen = ctx.QueryFloat("sharpen")
-
-	// Available rotate angle range from 0 ~ 360, however if angle is not 90, 180, 270, 360, it will be filled with white background
-	config.Rotate = ctx.QueryFloat("rotate")
-
-	// Adjust brightness of the image, available range from 0 ~ 10, 1 means no change
-	config.Brightness = ctx.QueryFloat("brightness")
-
-	// Adjust saturation of the image, available range from 0 ~ 10, 1 means no change
-	config.Saturation = ctx.QueryFloat("saturation")
-
-	// Adjust hue of the image, available range from 0 ~ 360, hue will be 0 for no change, 90 for a complementary hue shift, 180 for a contrasting shift, 360 for no change again.
-	config.Hue = ctx.QueryFloat("hue")
-
-	// Adjust contrast of the image, available range from 0 ~ 10, 1 means no change
-	config.Contrast = ctx.QueryFloat("contrast")
-
 	//
-	config.Watermark = struct {
-		Text    string
-		Font    string
-		Color   string
-		With    float64
-		Height  float64
-		OffsetX float64
-		OffsetY float64
-		Opacity float64
-	}{}
-
-	config.Watermark.Text = ctx.Query("text")
-
-	config.Filter = ctx.Query("filter")
+	//// 特殊字段，指定图片源地址，本地/网络地址
+	//config.Src = ctx.Query("src")
+	//
+	//// 特殊字段，表示是的需要回源
+	//config.Refresh = ctx.QueryInt("refresh")
+	//
+	////height //width //both are in px.
+	//config.Width = ctx.QueryFloat("width")
+	//config.Height = ctx.QueryFloat("height")
+	//
+	//// Available options are: v(vertical), h(horizontal), b(Both vertical and horizontal)
+	//config.Flip = ctx.Query("flip")
+	//
+	//// Override quality set in dashbaord, available quality range from 10 ~ 100(100 means lossless convert)
+	//config.Quality = ctx.QueryFloat("quality", 80)
+	//
+	//// Available blur range from 10 ~ 100
+	//config.Blur = ctx.QueryFloat("blur")
+	//
+	//// Sharpen the image, available sharpen range from 1 ~ 10
+	//config.Sharpen = ctx.QueryFloat("sharpen")
+	//
+	//// Available rotate angle range from 0 ~ 360, however if angle is not 90, 180, 270, 360, it will be filled with white background
+	//config.Rotate = ctx.QueryFloat("rotate")
+	//
+	//// Adjust brightness of the image, available range from 0 ~ 10, 1 means no change
+	//config.Brightness = ctx.QueryFloat("brightness")
+	//
+	//// Adjust saturation of the image, available range from 0 ~ 10, 1 means no change
+	//config.Saturation = ctx.QueryFloat("saturation")
+	//
+	//// Adjust hue of the image, available range from 0 ~ 360, hue will be 0 for no change, 90 for a complementary hue shift, 180 for a contrasting shift, 360 for no change again.
+	//config.Hue = ctx.QueryFloat("hue")
+	//
+	//// Adjust contrast of the image, available range from 0 ~ 10, 1 means no change
+	//config.Contrast = ctx.QueryFloat("contrast")
 
 	return config
 }
@@ -89,7 +79,7 @@ func Image(ctx *fiber.Ctx) error {
 		LocalPath:  "",
 		Refresh:    imgConfig.Refresh,
 	}
-	localMeta, err := HandleToLocalPath(ctx, &appConfig)
+	localMeta, err := HandleToLocalPath(ctx, &imgConfig, &appConfig)
 	if err != nil {
 		return ctx.JSON(fiber.Map{
 			"error": err.Error(),
@@ -100,7 +90,7 @@ func Image(ctx *fiber.Ctx) error {
 
 	var exportConfig = models.ExportConfig{
 		StripMetadata: true,
-		Quality:       80,
+		Quality:       int(imgConfig.Quality),
 		Lossless:      false,
 	}
 
@@ -109,7 +99,7 @@ func Image(ctx *fiber.Ctx) error {
 	// 源文件不存在
 	if !utils.FileExists(localMeta.RemoteLocal) {
 		utils.RemoveMeta(localMeta.Id, localMeta.Origin)
-		_ = ctx.Send([]byte("file not found"))
+		_ = ctx.Send([]byte("raw file not found"))
 		_ = ctx.SendStatus(404)
 		return nil
 	}
@@ -158,7 +148,12 @@ func ConvertAndGetSmallestImage(
 				defer wg.Done()
 				_converted, _size, err := ConvertImage(
 					rawFile,
-					fmt.Sprintf("%s.%s", utils.GetOutputFilePath(localMeta.Id, localMeta.Origin, localMeta.Ext), fileType),
+					fmt.Sprintf(
+						"%s.%s.%s",
+						utils.GetOutputFilePath(localMeta.Id, localMeta.Origin, localMeta.Ext),
+						localMeta.FeatureId,
+						fileType,
+					),
 					fileType,
 					imgConfig,
 					appConfig,

@@ -94,7 +94,7 @@ func CheckSupported(httpAccept, httpUA string) map[string]bool {
 	return supported
 }
 
-func HandleToLocalPath(ctx *fiber.Ctx, appConfig *models.AppConfig) (models.LocalMeta, error) {
+func HandleToLocalPath(ctx *fiber.Ctx, imgConfig *models.ImageConfig, appConfig *models.AppConfig) (models.LocalMeta, error) {
 	var remote = false
 	var rawFile = models.Empty
 	var originHost = models.Local
@@ -126,6 +126,7 @@ func HandleToLocalPath(ctx *fiber.Ctx, appConfig *models.AppConfig) (models.Loca
 
 	localMeta = models.LocalMeta{
 		Id:          id,
+		FeatureId:   utils.HashString(fmt.Sprintf("%v", imgConfig))[:6],
 		Remote:      remote,
 		Origin:      originHost,
 		Ext:         fileExt,
@@ -174,9 +175,90 @@ func HandleToLocalPath(ctx *fiber.Ctx, appConfig *models.AppConfig) (models.Loca
 	return localMeta, nil
 }
 
-func ImageFilter(img *vips.ImageRef, config *models.ImageConfig, appConfig *models.AppConfig) *vips.ImageRef {
-
+func ImageFilter(img *vips.ImageRef, imgConfig *models.ImageConfig, appConfig *models.AppConfig) *vips.ImageRef {
+	_ = _filter(img, imgConfig)
 	return img
+}
+
+func _filter(img *vips.ImageRef, imgConfig *models.ImageConfig) (err error) {
+	err = nil
+	var imgRatio = float32(img.Metadata().Width) / float32(img.Metadata().Height)
+	if imgConfig.Width > 0 && imgConfig.Height > 0 {
+		err = img.Thumbnail(int(imgConfig.Width), int(imgConfig.Height), vips.InterestingAttention)
+	} else if imgConfig.Width > 0 && imgConfig.Height == 0 {
+		err = img.Thumbnail(int(imgConfig.Width), int(float32(imgConfig.Width)/imgRatio), 0)
+	} else if imgConfig.Height > 0 && imgConfig.Width == 0 {
+		err = img.Thumbnail(int(float32(imgConfig.Height)*imgRatio), int(imgConfig.Height), 0)
+	}
+	if err != nil {
+		log.Println("[image resize]", err.Error())
+	}
+
+	err = nil
+	switch strings.ToLower(imgConfig.Flip) {
+	case "v":
+		fallthrough
+	case "vertical":
+		err = img.Flip(vips.DirectionVertical)
+	case "h":
+		fallthrough
+	case "horizontal":
+		err = img.Flip(vips.DirectionHorizontal)
+	case "b":
+		fallthrough
+	case "both":
+		err = img.Flip(vips.DirectionHorizontal | vips.DirectionVertical)
+	}
+	if err != nil {
+		log.Println("[image flip]", err.Error())
+	}
+
+	err = nil
+	if imgConfig.Blur > 0 {
+		err = img.GaussianBlur(imgConfig.Blur)
+	}
+	if err != nil {
+		log.Println("[image blur]", err.Error())
+	}
+
+	err = nil
+	if imgConfig.Sharpen > 0 {
+		err = img.Sharpen(imgConfig.Sharpen, 0, 0)
+	}
+	if err != nil {
+		log.Println("[image sharpen]", err.Error())
+	}
+
+	err = nil
+	if imgConfig.Rotate > 0 {
+		err = img.Rotate(vips.Angle(int(imgConfig.Rotate)))
+	}
+	if err != nil {
+		log.Println("[image rotate]", err.Error())
+	}
+
+	err = nil
+	if imgConfig.Brightness > 0 || imgConfig.Saturation > 0 || imgConfig.Hue > 0 {
+		err = img.Modulate(imgConfig.Brightness, imgConfig.Saturation, imgConfig.Hue)
+	}
+	if err != nil {
+		log.Println("[image modulate]", err.Error())
+	}
+
+	// contrast 暂不支持
+	//img.Label(&vips.LabelParams{
+	//	Text:      "",
+	//	Font:      "",
+	//	Width:     vips.Scalar{},
+	//	Height:    vips.Scalar{},
+	//	OffsetX:   vips.Scalar{},
+	//	OffsetY:   vips.Scalar{},
+	//	Opacity:   0,
+	//	Color:     vips.Color{},
+	//	Alignment: 0,
+	//})
+
+	return err
 }
 
 func ExportImage(img *vips.ImageRef, toType string, exportParams *models.ExportConfig) (buf []byte, meta *vips.ImageMetadata, err error) {

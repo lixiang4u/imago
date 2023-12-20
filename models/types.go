@@ -43,32 +43,34 @@ type ExportConfig struct {
 }
 
 type ImageConfig struct {
-	HttpAccept string
-	HttpUA     string
-	Src        string
-	Refresh    int
-	With       float64
-	Height     float64
-	Flip       string
-	Quality    float64
-	Blur       float64
-	Sharpen    float64
-	Rotate     float64
-	Brightness float64
-	Saturation float64
-	Hue        float64
-	Contrast   float64
-	Watermark  struct {
-		Text    string
-		Font    string
-		Color   string
-		With    float64
-		Height  float64
-		OffsetX float64
-		OffsetY float64
-		Opacity float64
-	}
-	Filter string
+	HttpAccept   string   `json:"http_accept"`   // 特殊字段，从http头获取
+	HttpUA       string   `json:"http_ua"`       // 特殊字段，从http头获取
+	Src          string   `json:"src"`           // 特殊字段，表示目标图片url
+	Refresh      int      `json:"refresh"`       // 特殊字段，1.表示强制回源，0.默认不强制回源
+	Width        float64  `json:"width"`         // 图片resize的宽度
+	Height       float64  `json:"height"`        // 图片resize的高度
+	Flip         string   `json:"flip"`          //Available options are: v(vertical), h(horizontal), b(Both vertical and horizontal)
+	Quality      float64  `json:"quality"`       // Override quality set in dashbaord, available quality range from 10 ~ 100(100 means lossless convert)
+	Blur         float64  `json:"blur"`          // Available blur range from 10 ~ 100
+	Sharpen      float64  `json:"sharpen"`       // Sharpen the image, available sharpen range from 1 ~ 10
+	Rotate       float64  `json:"rotate"`        // Available rotate angle range from 0 ~ 360, however if angle is not 90, 180, 270, 360, it will be filled with white background
+	Brightness   float64  `json:"brightness"`    // Adjust brightness of the image, available range from 0 ~ 10, 1 means no change
+	Saturation   float64  `json:"saturation"`    // Adjust saturation of the image, available range from 0 ~ 10, 1 means no change
+	Hue          float64  `json:"hue"`           // Adjust hue of the image, available range from 0 ~ 360, hue will be 0 for no change, 90 for a complementary hue shift, 180 for a contrasting shift, 360 for no change again.
+	Contrast     float64  `json:"contrast"`      // Adjust contrast of the image, available range from 0 ~ 10, 1 means no change
+	VisualEffect []string `json:"visual_effect"` // 图片添加filter和水印相关，需要编码/解码
+}
+
+type Watermark struct {
+	Text    string  `json:"text"`
+	Font    string  `json:"font"`
+	Color   string  `json:"color"`
+	With    float64 `json:"with"`
+	Height  float64 `json:"height"`
+	OffsetX float64 `json:"offset_x"`
+	OffsetY float64 `json:"offset_y"`
+	Opacity float64 `json:"opacity"`
+	Align   string  `json:"align"`
 }
 
 type FileMeta struct {
@@ -80,6 +82,7 @@ type FileMeta struct {
 
 type LocalMeta struct {
 	Id          string
+	FeatureId   string
 	Origin      string
 	Remote      bool
 	Ext         string
