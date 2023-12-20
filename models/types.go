@@ -24,6 +24,7 @@ type AppConfig struct {
 	UserId     string // 用户ID
 	OriginSite string //原始域名（原图域）
 	LocalPath  string //本地位置（原图本地位置）
+	Refresh    int    //是否回源，1.是，0.否
 }
 
 // 当前任务相关配置
@@ -44,6 +45,7 @@ type ImageConfig struct {
 	HttpAccept string
 	HttpUA     string
 	Src        string
+	Refresh    int
 	With       float64
 	Height     float64
 	Flip       string

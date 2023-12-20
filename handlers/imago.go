@@ -28,6 +28,9 @@ func parseConfig(ctx *fiber.Ctx) models.ImageConfig {
 	// 特殊字段，指定图片源地址，本地/网络地址
 	config.Src = ctx.Query("src")
 
+	// 特殊字段，表示是的需要回源
+	config.Refresh = ctx.QueryInt("refresh")
+
 	//height //width //both are in px.
 	config.With = ctx.QueryFloat("width")
 	config.Height = ctx.QueryFloat("height")
@@ -82,7 +85,8 @@ func Image(ctx *fiber.Ctx) error {
 	var imgConfig = parseConfig(ctx)
 	var appConfig = models.AppConfig{
 		OriginSite: "",
-		//LocalPath:  "",
+		LocalPath:  "",
+		Refresh:    imgConfig.Refresh,
 	}
 	localMeta, err := HandleToLocalPath(ctx, &appConfig)
 	if err != nil {
@@ -155,8 +159,10 @@ func ConvertAndGetSmallestImage(
 		case models.SUPPORT_TYPE_AVIF:
 			fallthrough
 		case models.SUPPORT_TYPE_JPG:
+			fallthrough
+		default:
 			wg.Add(1)
-			go func() {
+			go func(rawFile, fileType string) {
 				defer wg.Done()
 				_converted, _size, err := ConvertImage(rawFile, fmt.Sprintf("%s.c.%s", rawFile, fileType), fileType, imgConfig, appConfig, exportConfig)
 				if err != nil {
@@ -167,8 +173,7 @@ func ConvertAndGetSmallestImage(
 					size = _size
 					convertedFile = _converted
 				}
-			}()
-		default:
+			}(rawFile, fileType)
 		}
 	}
 	wg.Wait()

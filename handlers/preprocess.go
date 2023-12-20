@@ -115,7 +115,9 @@ func HandleToLocalPath(ctx *fiber.Ctx, appConfig *models.AppConfig) (models.Loca
 		}
 		originHost = tmpUrl.Host
 		rawFile = fmt.Sprintf("%s/%s", strings.TrimRight(appConfig.OriginSite, "/"), strings.TrimLeft(requestUri, "/"))
-		rawVersion = utils.GetResourceVersion(rawFile, nil)
+		if appConfig.Refresh == 1 {
+			rawVersion = utils.GetResourceVersion(rawFile, nil)
+		}
 	} else {
 		rawFile = path.Join(appConfig.LocalPath, requestUri)
 	}
