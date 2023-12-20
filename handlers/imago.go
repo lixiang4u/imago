@@ -158,7 +158,7 @@ func ConvertAndGetSmallestImage(
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				_converted, _size, err := ConvertImage(rawFile, fmt.Sprintf("%s.c.%s", rawFile, models.SUPPORT_TYPE_JPG), models.SUPPORT_TYPE_JPG, imgConfig, appConfig, exportConfig)
+				_converted, _size, err := ConvertImage(rawFile, fmt.Sprintf("%s.c.%s", rawFile, fileType), fileType, imgConfig, appConfig, exportConfig)
 				if err != nil {
 					log.Println("[ConvertImageError]", err.Error())
 					return
@@ -186,6 +186,7 @@ func ConvertImage(
 ) (converted string, size int64, err error) {
 	converted = convertedFile
 	if utils.FileExists(convertedFile) {
+		log.Println("[ConvertImage.Find]", convertedFile)
 		return converted, utils.FileSize(convertedFile), nil
 	}
 
