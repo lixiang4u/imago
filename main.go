@@ -9,11 +9,9 @@ import (
 func main() {
 
 	app := fiber.New()
-
-	app.Get("/ping", func(ctx *fiber.Ctx) error {
-		return ctx.JSON(fiber.Map{"status": "ok"})
-	})
-
+	//app.Use(etag.New(etag.Config{Weak: true}))
+	app.Get("/ping", handlers.Ping)
+	app.Get("/shrink", handlers.Shrink)
 	app.Get("/*", handlers.Image)
 
 	log.Fatal(app.Listen(":8020"))

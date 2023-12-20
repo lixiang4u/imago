@@ -11,6 +11,7 @@ var (
 	MetaRoot   = "./meta"   //元数据数据存储路径
 	RemoteRoot = "./remote" //远程图片原图存储目录
 	OutputRoot = "./output" // 压缩等操作后的图片文件
+	UploadRoot = "./upload" // web端上传目录
 	LocalCache = cache.New(5*time.Minute, 10*time.Minute)
 	ImageTypes = []string{"jpg", "png", "jpeg", "bmp", "gif", "svg", "heic"}
 

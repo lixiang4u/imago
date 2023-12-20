@@ -23,6 +23,11 @@ func GetOutputFilePath(id, originHost, fileExt string) string {
 	return p
 }
 
+func GetUploadFilePath(id, originHost, fileExt string) string {
+	var p = path.Join(models.UploadRoot, time.Now().Format("2006-01-02"), originHost, id[:2], fmt.Sprintf("%s.%s", id, fileExt))
+	return p
+}
+
 func GetMetaFilePath(id, originHost string) string {
 	var p = path.Join(models.MetaRoot, originHost, id[:2], fmt.Sprintf("%s.json", id))
 	return p
