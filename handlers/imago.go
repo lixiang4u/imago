@@ -31,43 +31,6 @@ func parseConfig(ctx *fiber.Ctx) models.ImageConfig {
 
 	config.HttpUA = string(ctx.Request().Header.Peek("User-Agent"))
 	config.HttpAccept = string(ctx.Request().Header.Peek("Accept"))
-	//
-	//// 特殊字段，指定图片源地址，本地/网络地址
-	//config.Src = ctx.Query("src")
-	//
-	//// 特殊字段，表示是的需要回源
-	//config.Refresh = ctx.QueryInt("refresh")
-	//
-	////height //width //both are in px.
-	//config.Width = ctx.QueryFloat("width")
-	//config.Height = ctx.QueryFloat("height")
-	//
-	//// Available options are: v(vertical), h(horizontal), b(Both vertical and horizontal)
-	//config.Flip = ctx.Query("flip")
-	//
-	//// Override quality set in dashbaord, available quality range from 10 ~ 100(100 means lossless convert)
-	//config.Quality = ctx.QueryFloat("quality", 80)
-	//
-	//// Available blur range from 10 ~ 100
-	//config.Blur = ctx.QueryFloat("blur")
-	//
-	//// Sharpen the image, available sharpen range from 1 ~ 10
-	//config.Sharpen = ctx.QueryFloat("sharpen")
-	//
-	//// Available rotate angle range from 0 ~ 360, however if angle is not 90, 180, 270, 360, it will be filled with white background
-	//config.Rotate = ctx.QueryFloat("rotate")
-	//
-	//// Adjust brightness of the image, available range from 0 ~ 10, 1 means no change
-	//config.Brightness = ctx.QueryFloat("brightness")
-	//
-	//// Adjust saturation of the image, available range from 0 ~ 10, 1 means no change
-	//config.Saturation = ctx.QueryFloat("saturation")
-	//
-	//// Adjust hue of the image, available range from 0 ~ 360, hue will be 0 for no change, 90 for a complementary hue shift, 180 for a contrasting shift, 360 for no change again.
-	//config.Hue = ctx.QueryFloat("hue")
-	//
-	//// Adjust contrast of the image, available range from 0 ~ 10, 1 means no change
-	//config.Contrast = ctx.QueryFloat("contrast")
 
 	return config
 }
@@ -104,7 +67,7 @@ func Image(ctx *fiber.Ctx) error {
 		return nil
 	}
 
-	convertedFile, convertedSize, ok := ConvertAndGetSmallestImage(localMeta, supported, &imgConfig, &appConfig, &exportConfig)
+	convertedFile, convertedSize, ok := ConvertAndGetSmallestImage(localMeta, supported, &imgConfig, &exportConfig)
 	if !ok {
 		_ = ctx.Send([]byte("convert failed"))
 		_ = ctx.SendStatus(404)
@@ -123,7 +86,6 @@ func ConvertAndGetSmallestImage(
 	localMeta models.LocalMeta,
 	supported map[string]bool,
 	imgConfig *models.ImageConfig,
-	appConfig *models.AppConfig,
 	exportConfig *models.ExportConfig,
 ) (convertedFile string, size int64, ok bool) {
 	// 默认源文件最小，但是也可能压缩后的问题比源文件还大（源文件是压缩文件会导致再次压缩会变大）
@@ -156,7 +118,6 @@ func ConvertAndGetSmallestImage(
 					),
 					fileType,
 					imgConfig,
-					appConfig,
 					exportConfig,
 				)
 				if err != nil {
@@ -180,7 +141,6 @@ func ConvertImage(
 	convertedFile,
 	format string,
 	imgConfig *models.ImageConfig,
-	appConfig *models.AppConfig,
 	exportConfig *models.ExportConfig,
 ) (converted string, size int64, err error) {
 	converted = convertedFile
@@ -206,7 +166,7 @@ func ConvertImage(
 	}
 	defer img.Close()
 
-	img = ImageFilter(img, imgConfig, appConfig)
+	img = ImageFilter(img, imgConfig)
 
 	buf, _, err := ExportImage(img, format, exportConfig)
 	if err != nil {

@@ -189,7 +189,7 @@ func HandleToLocalPath(ctx *fiber.Ctx, imgConfig *models.ImageConfig, appConfig 
 	return localMeta, nil
 }
 
-func ImageFilter(img *vips.ImageRef, imgConfig *models.ImageConfig, appConfig *models.AppConfig) *vips.ImageRef {
+func ImageFilter(img *vips.ImageRef, imgConfig *models.ImageConfig) *vips.ImageRef {
 	_ = _filter(img, imgConfig)
 	return img
 }

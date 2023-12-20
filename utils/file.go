@@ -24,7 +24,7 @@ func GetOutputFilePath(id, originHost, fileExt string) string {
 }
 
 func GetUploadFilePath(id, originHost, fileExt string) string {
-	var p = path.Join(models.UploadRoot, time.Now().Format("2006-01-02"), originHost, id[:2], fmt.Sprintf("%s.%s", id, fileExt))
+	var p = path.Join(models.UploadRoot, time.Now().Format("200601"), originHost, id[:2], fmt.Sprintf("%s.%s", id, fileExt))
 	return p
 }
 

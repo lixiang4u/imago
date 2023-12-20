@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/cespare/xxhash/v2"
+	"github.com/gofiber/fiber/v2/utils"
 	"reflect"
 	"slices"
+	"strings"
 )
 
 func ToJsonString(v interface{}, pretty bool) string {
@@ -58,4 +60,13 @@ func IsDefaultValue(value interface{}) bool {
 	default:
 		return false
 	}
+}
+
+func UUIDv4() string {
+	return utils.UUIDv4()
+}
+
+func FormattedUUID(length int) string {
+	var s = strings.ReplaceAll(UUIDv4(), "-", "")
+	return strings.ToLower(s[:length])
 }
