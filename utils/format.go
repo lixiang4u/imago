@@ -6,9 +6,14 @@ import (
 	"github.com/cespare/xxhash/v2"
 )
 
-func ToJsonString(v interface{}) string {
-	bs, _ := json.MarshalIndent(v, "", "\t")
-	return string(bs)
+func ToJsonString(v interface{}, pretty bool) string {
+	var buf []byte
+	if pretty {
+		buf, _ = json.MarshalIndent(v, "", "\t")
+	} else {
+		buf, _ = json.Marshal(v)
+	}
+	return string(buf)
 }
 
 func HashString(data string) string {
@@ -16,5 +21,5 @@ func HashString(data string) string {
 }
 
 func CompressRate(rawSize, convertedSize int64) string {
-	return fmt.Sprintf(`%.2f`, float64(convertedSize)/float64(rawSize))
+	return fmt.Sprintf(`%.2f%%`, 100.0-float64(convertedSize)*100/float64(rawSize))
 }

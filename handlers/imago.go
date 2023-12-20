@@ -103,13 +103,7 @@ func Image(ctx *fiber.Ctx) error {
 		Lossless:      false,
 	}
 
-	log.Println("[rawLocalFile]", utils.ToJsonString(localMeta))
-
-	log.Println("[drop]", utils.HashString(utils.ToJsonString(fiber.Map{
-		"imgConfig":    imgConfig,
-		"appConfig":    appConfig,
-		"exportConfig": exportConfig,
-	})))
+	log.Println("[RawMeta]", utils.ToJsonString(localMeta, false))
 
 	// 源文件不存在
 	if !utils.FileExists(localMeta.RemoteLocal) {
@@ -119,7 +113,7 @@ func Image(ctx *fiber.Ctx) error {
 		return nil
 	}
 
-	convertedFile, convertedSize, ok := ConvertAndGetSmallestImage(localMeta.RemoteLocal, supported, &imgConfig, &appConfig, &exportConfig)
+	convertedFile, convertedSize, ok := ConvertAndGetSmallestImage(localMeta.RemoteLocal, localMeta.Size, supported, &imgConfig, &appConfig, &exportConfig)
 	if !ok {
 		_ = ctx.Send([]byte("convert failed"))
 		_ = ctx.SendStatus(404)
@@ -128,26 +122,24 @@ func Image(ctx *fiber.Ctx) error {
 
 	var mime = utils.GetFileMIME(convertedFile)
 
-	log.Println("[debug]", utils.ToJsonString(fiber.Map{
-		"localMeta.RemoteLocal": localMeta.RemoteLocal,
-		"convertedFile":         convertedFile,
-		"localMeta.Size":        localMeta.Size,
-		"convertedSize":         convertedSize,
-		"mime":                  mime,
-	}))
-
 	ctx.Set("Content-Type", mime.Value)
 	ctx.Set("X-Compression-Rate", utils.CompressRate(localMeta.Size, convertedSize))
+	ctx.Set("X-Server", "imago")
 	return ctx.SendFile(convertedFile)
 }
 
 func ConvertAndGetSmallestImage(
 	rawFile string,
+	rawSize int64,
 	supported map[string]bool,
 	imgConfig *models.ImageConfig,
 	appConfig *models.AppConfig,
 	exportConfig *models.ExportConfig,
 ) (convertedFile string, size int64, ok bool) {
+	// 默认源文件最小，但是也可能压缩后的问题比源文件还大（源文件是压缩文件会导致再次压缩会变大）
+	size = rawSize
+	convertedFile = rawFile
+
 	var wg sync.WaitGroup
 	for fileType, ok := range supported {
 		if !ok {
@@ -191,7 +183,6 @@ func ConvertImage(
 ) (converted string, size int64, err error) {
 	converted = convertedFile
 	if utils.FileExists(convertedFile) {
-		log.Println("[ConvertImage.Find]", convertedFile)
 		return converted, utils.FileSize(convertedFile), nil
 	}
 
