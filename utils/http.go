@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"github.com/gofiber/fiber/v2"
 	"log"
 	"net/http"
 )
@@ -19,7 +20,7 @@ func GetResourceVersion(requestUrl string, keys []string) string {
 		_ = resp.Body.Close()
 	}()
 
-	log.Println("[GetResourceVersion.Content-Type]", resp.Header.Get("Content-Type"))
+	log.Println("[fetch resource]", ToJsonString(fiber.Map{"content_type": resp.Header.Get("Content-Type"), "requestUrl": requestUrl}, false))
 
 	var s = ""
 	for _, key := range keys {

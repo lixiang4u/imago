@@ -103,7 +103,7 @@ func Image(ctx *fiber.Ctx) error {
 		Lossless:      false,
 	}
 
-	log.Println("[RawMeta]", utils.ToJsonString(localMeta, false))
+	log.Println("[raw meta]", utils.ToJsonString(localMeta, false))
 
 	// 源文件不存在
 	if !utils.FileExists(localMeta.RemoteLocal) {

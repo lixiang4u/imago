@@ -38,14 +38,12 @@ func LogMeta(id, originHost, source, version string) {
 		Url:     source,
 		Version: version,
 	})
-	log.Println("[LogMeta.source]", source)
 	_ = os.WriteFile(p, buf, 0644)
 }
 
 func GetMeta(id, originHost, source, version string) (meta models.FileMeta, err error) {
 	var p = GetMetaFilePath(id, originHost)
 	buf, err := os.ReadFile(p)
-	log.Println("[GetMeta.p]", p)
 	if os.IsNotExist(err) {
 		LogMeta(id, originHost, source, version)
 		return GetMeta(id, originHost, source, version)
