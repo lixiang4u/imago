@@ -72,14 +72,27 @@ func Shrink(ctx *fiber.Ctx) error {
 		"MIME": utils.GetFileMIME(localMeta.Raw),
 	}, false))
 
+	var convertedFile = fmt.Sprintf(
+		"%s.%s.%s",
+		utils.GetOutputFilePath(localMeta.Id, localMeta.Origin, localMeta.Ext),
+		localMeta.FeatureId,
+		localMeta.Ext,
+	)
+
+	if utils.FileExists(convertedFile) {
+		var _size = utils.FileSize(convertedFile)
+		return ctx.JSON(fiber.Map{
+			"status": "ok",
+			"url":    convertedFile,
+			"size":   _size,
+			"rate":   utils.CompressRate(localMeta.Size, _size),
+			"time":   time.Now().Format("2006-01-02 15:04:05"),
+		})
+	}
+
 	_converted, _size, err := ConvertImage(
 		localMeta.Raw,
-		fmt.Sprintf(
-			"%s.%s.%s",
-			utils.GetOutputFilePath(localMeta.Id, localMeta.Origin, localMeta.Ext),
-			localMeta.FeatureId,
-			localMeta.Ext,
-		),
+		convertedFile,
 		models.SUPPORT_TYPE_RAW,
 		&imgConfig,
 		&exportConfig,
