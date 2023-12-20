@@ -97,6 +97,7 @@ func CheckSupported(httpAccept, httpUA string) map[string]bool {
 func HandleToLocalPath(ctx *fiber.Ctx, imgConfig *models.ImageConfig, appConfig *models.AppConfig) (models.LocalMeta, error) {
 	var remote = false
 	var rawFile = models.Empty
+	var rawFileClean = models.Empty
 	var originHost = models.Local
 	var rawVersion = models.Empty
 	var requestUri = string(ctx.Request().RequestURI())
@@ -114,17 +115,26 @@ func HandleToLocalPath(ctx *fiber.Ctx, imgConfig *models.ImageConfig, appConfig 
 			tmpUrl.Host = models.Local
 		}
 		originHost = tmpUrl.Host
+
+		tmpUrl, err = url.Parse(requestUri)
+		if err != nil {
+			rawFileClean = requestUri
+		} else {
+			rawFileClean = tmpUrl.Path
+		}
+
 		rawFile = fmt.Sprintf("%s/%s", strings.TrimRight(appConfig.OriginSite, "/"), strings.TrimLeft(requestUri, "/"))
 		if appConfig.Refresh == 1 {
 			rawVersion = utils.GetResourceVersion(rawFile, nil)
 		}
 	} else {
 		rawFile = path.Join(appConfig.LocalPath, requestUri)
+		rawFileClean = rawFile
 	}
 
-	var id = utils.HashString(fmt.Sprintf("%s,%s", rawFile, appConfig.OriginSite))
+	var id = utils.HashString(fmt.Sprintf("%s,%s", appConfig.OriginSite, rawFileClean))
 	var featureId = "default"
-	if !utils.IsDefaultObj(imgConfig) {
+	if !utils.IsDefaultObj(*imgConfig, []string{"HttpAccept", "HttpUA", "Src"}) {
 		featureId = utils.HashString(fmt.Sprintf("%v", imgConfig))[:6]
 	}
 
@@ -235,7 +245,18 @@ func _filter(img *vips.ImageRef, imgConfig *models.ImageConfig) (err error) {
 
 	err = nil
 	if imgConfig.Rotate > 0 {
-		err = img.Rotate(vips.Angle(int(imgConfig.Rotate)))
+		switch imgConfig.Rotate {
+		case 0:
+			err = img.Rotate(vips.Angle0)
+		case 90:
+			err = img.Rotate(vips.Angle90)
+		case 180:
+			err = img.Rotate(vips.Angle180)
+		case 270:
+			err = img.Rotate(vips.Angle270)
+		case 360:
+			err = img.Rotate(vips.Angle0)
+		}
 	}
 	if err != nil {
 		log.Println("[image rotate]", err.Error())

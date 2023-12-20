@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/cespare/xxhash/v2"
 	"reflect"
+	"slices"
 )
 
 func ToJsonString(v interface{}, pretty bool) string {
@@ -25,13 +26,15 @@ func CompressRate(rawSize, convertedSize int64) string {
 	return fmt.Sprintf(`%.2f%%`, 100.0-float64(convertedSize)*100/float64(rawSize))
 }
 
-func IsDefaultObj(obj interface{}) bool {
+func IsDefaultObj(obj interface{}, excludes []string) bool {
 	v := reflect.ValueOf(obj)
 	t := v.Type()
 	for i := 0; i < t.NumField(); i++ {
-		//field := t.Field(i)
+		field := t.Field(i)
 		value := v.Field(i)
-
+		if slices.Contains(excludes, field.Name) {
+			continue
+		}
 		if !IsDefaultValue(value.Interface()) {
 			return false
 		}
