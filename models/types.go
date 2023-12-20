@@ -14,10 +14,11 @@ var (
 	LocalCache = cache.New(5*time.Minute, 10*time.Minute)
 	ImageTypes = []string{"jpg", "png", "jpeg", "bmp", "gif", "svg", "heic"}
 
-	SUPPORT_TYPE_RAW  = "raw"
-	SUPPORT_TYPE_WEBP = "webp"
-	SUPPORT_TYPE_AVIF = "avif"
-	SUPPORT_TYPE_JPG  = "jpg"
+	SUPPORT_TYPE_RAW    = "raw"
+	SUPPORT_TYPE_WEBP   = "webp"
+	SUPPORT_TYPE_AVIF   = "avif"
+	SUPPORT_TYPE_JPG    = "jpg"
+	SUPPORT_TYPE_NATIVE = "native"
 )
 
 type AppConfig struct {

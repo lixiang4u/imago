@@ -122,7 +122,7 @@ func HandleToLocalPath(ctx *fiber.Ctx, appConfig *models.AppConfig) (models.Loca
 		rawFile = path.Join(appConfig.LocalPath, requestUri)
 	}
 
-	var id = utils.HashString(fmt.Sprintf("%s,%s,%s", rawFile, rawVersion, appConfig.OriginSite))
+	var id = utils.HashString(fmt.Sprintf("%s,%s", rawFile, appConfig.OriginSite))
 
 	localMeta = models.LocalMeta{
 		Id:          id,
@@ -146,11 +146,18 @@ func HandleToLocalPath(ctx *fiber.Ctx, appConfig *models.AppConfig) (models.Loca
 
 	localMeta.RemoteLocal = utils.GetRemoteLocalFilePath(id, originHost, fileExt)
 
-	if meta.Version == rawVersion && utils.FileExists(localMeta.RemoteLocal) {
+	// 如果不需要refresh且文件存在，直接返回
+	if rawVersion == models.Empty && utils.FileExists(localMeta.RemoteLocal) {
 		localMeta.Size = utils.FileSize(localMeta.RemoteLocal)
 		return localMeta, nil
 	}
-	// 清理老数据
+	// 如果需要refresh且版本未变化，直接返回
+	if rawVersion != models.Empty && meta.Version == rawVersion {
+		localMeta.Size = utils.FileSize(localMeta.RemoteLocal)
+		return localMeta, nil
+	}
+
+	// 需要回源，清理老数据
 	utils.RemoveCache(localMeta.RemoteLocal)
 	utils.RemoveMeta(id, originHost)
 	utils.LogMeta(id, originHost, rawFile, rawVersion)
@@ -174,14 +181,8 @@ func ImageFilter(img *vips.ImageRef, config *models.ImageConfig, appConfig *mode
 func ExportImage(img *vips.ImageRef, toType string, exportParams *models.ExportConfig) (buf []byte, meta *vips.ImageMetadata, err error) {
 	switch toType {
 	case models.SUPPORT_TYPE_RAW:
-		fallthrough
+		buf, meta, err = img.ExportNative()
 	case models.SUPPORT_TYPE_WEBP:
-		fallthrough
-	case models.SUPPORT_TYPE_AVIF:
-		fallthrough
-	case models.SUPPORT_TYPE_JPG:
-		fallthrough
-	default:
 		// If some special images cannot encode with default ReductionEffort(0), then retry from 0 to 6
 		buf, meta, err = img.ExportWebp(&vips.WebpExportParams{
 			StripMetadata:   exportParams.StripMetadata,
@@ -189,6 +190,13 @@ func ExportImage(img *vips.ImageRef, toType string, exportParams *models.ExportC
 			Quality:         exportParams.Quality,
 			ReductionEffort: exportParams.ReductionEffort,
 		})
+	case models.SUPPORT_TYPE_AVIF:
+		buf, meta, err = img.ExportAvif(vips.NewAvifExportParams())
+		fallthrough
+	case models.SUPPORT_TYPE_JPG:
+		buf, meta, err = img.ExportJpeg(vips.NewJpegExportParams())
+	default:
+		buf, meta, err = img.ExportNative()
 	}
 	return
 }
