@@ -22,8 +22,8 @@ func init() {
 func parseConfig(ctx *fiber.Ctx) models.ImageConfig {
 	var config = models.ImageConfig{}
 
-	//	config.HttpAccept = ctx.Query("Accept")
-	//	config.HttpUA = ctx.Query("User-Agent")
+	config.HttpUA = string(ctx.Request().Header.Peek("User-Agent"))
+	config.HttpAccept = string(ctx.Request().Header.Peek("Accept"))
 
 	// 特殊字段，指定图片源地址，本地/网络地址
 	config.Src = ctx.Query("src")
@@ -145,13 +145,6 @@ func ConvertAndGetSmallestImage(
 	exportConfig *models.ExportConfig,
 ) (convertedFile string, size int64, ok bool) {
 	var wg sync.WaitGroup
-	for _, ok := range supported {
-		if !ok {
-			continue
-		}
-		wg.Add(1)
-	}
-
 	for fileType, ok := range supported {
 		if !ok {
 			continue
@@ -162,6 +155,7 @@ func ConvertAndGetSmallestImage(
 		case models.SUPPORT_TYPE_AVIF:
 			fallthrough
 		case models.SUPPORT_TYPE_JPG:
+			wg.Add(1)
 			go func() {
 				defer wg.Done()
 				_converted, _size, err := ConvertImage(rawFile, fmt.Sprintf("%s.c.%s", rawFile, models.SUPPORT_TYPE_JPG), models.SUPPORT_TYPE_JPG, imgConfig, appConfig, exportConfig)
@@ -175,7 +169,6 @@ func ConvertAndGetSmallestImage(
 				}
 			}()
 		default:
-			break
 		}
 	}
 	wg.Wait()
