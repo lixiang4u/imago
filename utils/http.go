@@ -13,7 +13,7 @@ func GetResourceVersion(requestUrl string, keys []string) string {
 	}
 	resp, err := http.Head(requestUrl)
 	if err != nil {
-		log.Println("[http.Head]", err.Error())
+		log.Println("[http.head]", err.Error())
 		return ""
 	}
 	defer func() {

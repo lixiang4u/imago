@@ -158,7 +158,7 @@ func ConvertAndGetSmallestImage(
 				defer wg.Done()
 				_converted, _size, err := ConvertImage(rawFile, fmt.Sprintf("%s.c.%s", rawFile, fileType), fileType, imgConfig, appConfig, exportConfig)
 				if err != nil {
-					log.Println("[ConvertImageError]", err.Error())
+					log.Println("[convert image]", err.Error())
 					return
 				}
 				if size == 0 || _size < size {
@@ -192,22 +192,22 @@ func ConvertImage(
 
 	img, err := vips.LoadImageFromFile(rawFile, p)
 	if err != nil {
-		log.Println("[vips.LoadImageFromFile]", err.Error())
+		log.Println("[libvips load]", err.Error())
 		return converted, 0, err
 	}
 	defer img.Close()
 
 	img = ImageFilter(img, imgConfig, appConfig)
 
-	buf, meta, err := ExportImage(img, format, exportConfig)
+	buf, _, err := ExportImage(img, format, exportConfig)
 	if err != nil {
-		log.Println("[ExportImage]", err.Error())
+		log.Println("[export image]", err.Error())
 		return converted, 0, err
 	}
-	log.Println("[ExportImage.Format]", meta.Format)
+	log.Println("[export image]", format, rawFile)
 
 	if err := os.WriteFile(convertedFile, buf, 0600); err != nil {
-		log.Println("[ExportImageSave]", err.Error())
+		log.Println("[export save]", err.Error())
 		return converted, 0, err
 	}
 

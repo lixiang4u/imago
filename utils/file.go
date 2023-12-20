@@ -87,12 +87,12 @@ func FileExists(fileName string) bool {
 func RemoveCache(p string) {
 	files, err := filepath.Glob(p + "*")
 	if err != nil {
-		log.Println("[RemoveCacheError1]", p, err.Error())
+		log.Println("[remove cache]", p, err.Error())
 		return
 	}
 	for _, f := range files {
 		if err = os.Remove(f); err != nil {
-			log.Println("[RemoveCacheError2]", f, err.Error())
+			log.Println("[remove cache]", f, err.Error())
 		}
 	}
 }
