@@ -78,7 +78,7 @@ func Shrink(ctx *fiber.Ctx) error {
 		"MIME": fileMIME,
 	}, false))
 
-	var convertedFile = fmt.Sprintf("%s.%s.%s", localMeta.Raw, localMeta.FeatureId, localMeta.Ext)
+	var convertedFile = fmt.Sprintf("%s.%s.%s", localMeta.Raw, localMeta.FeatureId, dstFormat)
 
 	if utils.FileExists(convertedFile) {
 		var _size = utils.FileSize(convertedFile)
