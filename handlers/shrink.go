@@ -29,7 +29,7 @@ func Shrink(ctx *fiber.Ctx) error {
 	}
 
 	// 最大100MB
-	if fh.Size > int64(models.MAX_UPLOAD) || fh.Size <= 4 {
+	if fh.Size > int64(models.MaxUpload) || fh.Size <= 4 {
 		return ctx.JSON(fiber.Map{
 			"error": fmt.Sprintf("file size irregular(%d)", fh.Size),
 		})

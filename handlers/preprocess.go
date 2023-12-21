@@ -194,6 +194,13 @@ func ImageFilter(img *vips.ImageRef, imgConfig *models.ImageConfig) *vips.ImageR
 }
 
 func _filter(img *vips.ImageRef, imgConfig *models.ImageConfig) (err error) {
+	if img.Metadata().Width > models.MaxWebpPixel {
+		img.Metadata().Width = models.MaxWebpPixel
+	}
+	if img.Metadata().Height > models.MaxWebpPixel {
+		img.Metadata().Height = models.MaxWebpPixel
+	}
+
 	err = nil
 	var imgRatio = float32(img.Metadata().Width) / float32(img.Metadata().Height)
 	if imgConfig.Width > 0 && imgConfig.Height > 0 {

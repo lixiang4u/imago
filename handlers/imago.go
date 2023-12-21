@@ -38,8 +38,8 @@ func parseConfig(ctx *fiber.Ctx) models.ImageConfig {
 func Image(ctx *fiber.Ctx) error {
 	var imgConfig = parseConfig(ctx)
 	var appConfig = models.AppConfig{
-		OriginSite: "",
-		LocalPath:  "",
+		OriginSite: models.ConfigRemote,
+		LocalPath:  models.ConfigLocal,
 		Refresh:    imgConfig.Refresh,
 	}
 	localMeta, err := HandleToLocalPath(ctx, &imgConfig, &appConfig)
