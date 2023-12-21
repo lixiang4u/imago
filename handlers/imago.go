@@ -23,8 +23,17 @@ func init() {
 func parseConfig(ctx *fiber.Ctx) models.ImageConfig {
 	var config = models.ImageConfig{}
 
-	if err := ctx.QueryParser(&config); err != nil {
-		log.Println("[QueryParser]", err.Error())
+	switch ctx.Method() {
+	case "POST":
+		if err := ctx.BodyParser(&config); err != nil {
+			log.Println("[QueryParser]", err.Error())
+		}
+	case "GET":
+		fallthrough
+	default:
+		if err := ctx.QueryParser(&config); err != nil {
+			log.Println("[QueryParser]", err.Error())
+		}
 	}
 
 	log.Println("[QueryParser]", utils.ToJsonString(config, false))
