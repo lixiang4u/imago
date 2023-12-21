@@ -68,6 +68,10 @@ func Shrink(ctx *fiber.Ctx) error {
 	}
 
 	var fileMIME = utils.GetFileMIME(localMeta.Raw)
+	var dstFormat = fileMIME.Subtype
+	if len(imgConfig.Format) > 0 {
+		dstFormat = imgConfig.Format
+	}
 
 	log.Println("[upload file MIME]", utils.ToJsonString(fiber.Map{
 		"file": localMeta.Raw,
@@ -91,7 +95,7 @@ func Shrink(ctx *fiber.Ctx) error {
 	_converted, _size, err := ConvertImage(
 		localMeta.Raw,
 		convertedFile,
-		fileMIME.Subtype,
+		dstFormat,
 		&imgConfig,
 		&exportConfig,
 	)

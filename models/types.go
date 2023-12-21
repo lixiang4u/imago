@@ -73,6 +73,7 @@ type ImageConfig struct {
 	Hue          float64  `json:"hue" form:"hue"`                     // Adjust hue of the image, available range from 0 ~ 360, hue will be 0 for no change, 90 for a complementary hue shift, 180 for a contrasting shift, 360 for no change again.
 	Contrast     float64  `json:"contrast" form:"contrast"`           // Adjust contrast of the image, available range from 0 ~ 10, 1 means no change
 	VisualEffect []string `json:"visual_effect" form:"visual_effect"` // 图片添加filter和水印相关，需要编码/解码
+	Format       string   `json:"format" json:"format"`               // 目标图格式，SUPPORT_TYPE_*
 }
 
 type Watermark struct {
