@@ -22,6 +22,11 @@ var (
 	SUPPORT_TYPE_WEBP   = "webp"
 	SUPPORT_TYPE_AVIF   = "avif"
 	SUPPORT_TYPE_JPG    = "jpg"
+	SUPPORT_TYPE_BMP    = "bmp"
+	SUPPORT_TYPE_GIF    = "gif"
+	SUPPORT_TYPE_HEIF   = "heif"
+	SUPPORT_TYPE_JPEG   = "jpeg"
+	SUPPORT_TYPE_PNG    = "png"
 	SUPPORT_TYPE_NATIVE = "native"
 )
 
@@ -39,11 +44,15 @@ type ExportConfig struct {
 	//Lossless：表示是否使用无损压缩。如果设置为 true，则不会对图片进行任何有损压缩，保持完全的像素精度；如果设置为 false，则会应用有损压缩以减小文件大小。
 	//NearLossless：表示是否使用近似无损压缩。如果设置为 true，则会应用一定程度的有损压缩，但保持较高的视觉质量；如果设置为 false，则不会应用近似无损压缩。
 	//ReductionEffort：表示压缩的努力程度。取值范围为 0 到 6，0 表示最快压缩速度但压缩率较低，6 表示最慢压缩速度但压缩率较高。
+	//OptimizeCoding：是否使用优化编码，如果为 true，则使用优化编码；如果为 false，则使用普通编码。
+	//Compression：PNG 图像的压缩级别，取值范围一般为 0 到 9，数值越大表示压缩率越高但速度越慢。
 	StripMetadata   bool
 	Quality         int
 	Lossless        bool
 	NearLossless    bool
 	ReductionEffort int
+	OptimizeCoding  bool
+	Compression     int
 }
 
 type ImageConfig struct {

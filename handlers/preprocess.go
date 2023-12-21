@@ -78,19 +78,19 @@ func CheckSupported(httpAccept, httpUA string) map[string]bool {
 	}
 
 	if strings.Contains(httpAccept, "image/webp") {
-		supported["webp"] = true
+		supported[models.SUPPORT_TYPE_WEBP] = true
 	}
 	if strings.Contains(httpAccept, "image/avif") {
-		supported["avif"] = true
+		supported[models.SUPPORT_TYPE_AVIF] = true
 	}
 	if strings.Contains(httpAccept, "image/jpeg") {
-		supported["jpg"] = true
+		supported[models.SUPPORT_TYPE_JPG] = true
 	}
 	if strings.Contains(httpAccept, "image/jpg") {
-		supported["jpg"] = true
+		supported[models.SUPPORT_TYPE_JPG] = true
 	}
 	if strings.Contains(httpAccept, "image/pjpeg") {
-		supported["jpg"] = true
+		supported[models.SUPPORT_TYPE_JPG] = true
 	}
 	if strings.Contains(httpAccept, "*/*") {
 		for k, _ := range supported {
@@ -305,10 +305,32 @@ func ExportImage(img *vips.ImageRef, toType string, exportParams *models.ExportC
 			ReductionEffort: exportParams.ReductionEffort,
 		})
 	case models.SUPPORT_TYPE_AVIF:
-		buf, meta, err = img.ExportAvif(vips.NewAvifExportParams())
+		buf, meta, err = img.ExportAvif(&vips.AvifExportParams{
+			StripMetadata: true,
+			Quality:       exportParams.Quality,
+			Lossless:      exportParams.Lossless,
+		})
+	case models.SUPPORT_TYPE_BMP:
+		fallthrough
+	case models.SUPPORT_TYPE_JPEG:
 		fallthrough
 	case models.SUPPORT_TYPE_JPG:
-		buf, meta, err = img.ExportJpeg(vips.NewJpegExportParams())
+		buf, meta, err = img.ExportJpeg(&vips.JpegExportParams{
+			StripMetadata:  true,
+			Quality:        exportParams.Quality,
+			OptimizeCoding: exportParams.OptimizeCoding,
+		})
+	case models.SUPPORT_TYPE_PNG:
+		buf, meta, err = img.ExportPng(&vips.PngExportParams{
+			StripMetadata: true,
+			Compression:   6,
+			Quality:       exportParams.Quality,
+		})
+	case models.SUPPORT_TYPE_GIF:
+		buf, meta, err = img.ExportGIF(&vips.GifExportParams{
+			StripMetadata: true,
+			Quality:       exportParams.Quality,
+		})
 	default:
 		buf, meta, err = img.ExportNative()
 	}

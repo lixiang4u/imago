@@ -67,9 +67,11 @@ func Shrink(ctx *fiber.Ctx) error {
 		})
 	}
 
+	var fileMIME = utils.GetFileMIME(localMeta.Raw)
+
 	log.Println("[upload file MIME]", utils.ToJsonString(fiber.Map{
 		"file": localMeta.Raw,
-		"MIME": utils.GetFileMIME(localMeta.Raw),
+		"MIME": fileMIME,
 	}, false))
 
 	var convertedFile = fmt.Sprintf("%s.%s.%s", localMeta.Raw, localMeta.FeatureId, localMeta.Ext)
@@ -89,7 +91,7 @@ func Shrink(ctx *fiber.Ctx) error {
 	_converted, _size, err := ConvertImage(
 		localMeta.Raw,
 		convertedFile,
-		models.SUPPORT_TYPE_RAW,
+		fileMIME.Subtype,
 		&imgConfig,
 		&exportConfig,
 	)
