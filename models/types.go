@@ -1,35 +1,5 @@
 package models
 
-import (
-	"github.com/patrickmn/go-cache"
-	"time"
-)
-
-var (
-	Empty        = ""
-	Local        = "local"
-	MetaRoot     = "./meta"              //元数据数据存储路径
-	RemoteRoot   = "./remote"            //远程图片原图存储目录
-	OutputRoot   = "./output"            // 压缩等操作后的图片文件
-	UploadRoot   = "./upload"            // web端上传目录
-	MaxUpload    = 1 * 1024 * 1024 * 100 // 最大上传文件大小
-	LocalCache   = cache.New(5*time.Minute, 10*time.Minute)
-	ImageTypes   = []string{"jpg", "png", "jpeg", "bmp", "gif", "svg", "heic"}
-	UserAgent    = "Imago Service/1.0 (89f882e4f6ce47b8)"
-	MaxWebpPixel = 16383 // WebP is bitstream-compatible with VP8 and uses 14 bits for width and height. The maximum pixel dimensions of a WebP image is 16383 x 16383.
-
-	SUPPORT_TYPE_RAW    = "raw"
-	SUPPORT_TYPE_WEBP   = "webp"
-	SUPPORT_TYPE_AVIF   = "avif"
-	SUPPORT_TYPE_JPG    = "jpg"
-	SUPPORT_TYPE_BMP    = "bmp"
-	SUPPORT_TYPE_GIF    = "gif"
-	SUPPORT_TYPE_HEIF   = "heif"
-	SUPPORT_TYPE_JPEG   = "jpeg"
-	SUPPORT_TYPE_PNG    = "png"
-	SUPPORT_TYPE_NATIVE = "native"
-)
-
 type AppConfig struct {
 	UserId     string // 用户ID
 	OriginSite string //原始域名（原图域）
@@ -37,7 +7,6 @@ type AppConfig struct {
 	Refresh    int    //是否回源，1.是，0.否
 }
 
-// 当前任务相关配置
 type ExportConfig struct {
 	//StripMetadata：表示是否去除图片的元数据（如Exif信息等）。
 	//Quality：表示图片的质量，取值范围为 1 到 100。较高的值表示更好的质量，但文件大小也会增加。
