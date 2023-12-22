@@ -68,10 +68,10 @@ type LocalMeta struct {
 	Id          string
 	FeatureId   string
 	Origin      string
-	Remote      bool
-	Ext         string
-	RemoteLocal string
-	Raw         string
+	Remote      bool   // 源文件是否远程路径
+	Ext         string // 源文件后缀
+	RemoteLocal string //远程源文件在本地地址
+	Raw         string // 源文件的位置（本地或者远程URL）
 	RawVersion  string
 	Size        int64
 }

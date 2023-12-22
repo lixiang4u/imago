@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/lixiang4u/imago/models"
@@ -30,11 +31,11 @@ func loadRemotePrefetchList() []string {
 		if err != nil {
 			break // 读取完毕或发生错误时退出循环
 		}
-		line = strings.TrimSpace(line)
+		line = strings.TrimPrefix(strings.TrimSpace(line), "#")
 		if !strings.HasPrefix(line, "http://") || !strings.HasPrefix(line, "https://") {
 			continue
 		}
-		prefetchList = append(prefetchList)
+		prefetchList = append(prefetchList, line)
 	}
 
 	return prefetchList
@@ -50,7 +51,7 @@ func loadLocalPrefetchList() []string {
 			return nil
 		}
 
-		prefetchList = append(prefetchList, path)
+		prefetchList = append(prefetchList, strings.TrimSpace(path))
 
 		return nil
 	})
@@ -60,138 +61,83 @@ func loadLocalPrefetchList() []string {
 func Prefetch() error {
 	log.Println("[prefetch run]")
 
+	var imgConfig = &models.ImageConfig{}
+	var appConfig = &models.AppConfig{}
+
 	// 优先加载 prefetch.list 预取资源路径数据，再加载 local 配置目录下资源文件
 	var prefetchRemoteList = loadRemotePrefetchList()
+	var chRemote = make(chan bool, models.LocalConfig.App.PrefetchThreads)
 
 	log.Println("[prefetch remote]", utils.ToJsonString(fiber.Map{"file": "prefetch.list", "lines": len(prefetchRemoteList), "threads": models.LocalConfig.App.PrefetchThreads}, false))
 
-	var chRemote = make(chan bool, models.LocalConfig.App.PrefetchThreads)
 	for _, prefetchUrl := range prefetchRemoteList {
 		chRemote <- true
-		go func(ch chan bool, prefetchUrl string) {
-			//任务，结束后  <-ch 释放chan空间
-			defer func() { _ = <-ch }()
 
-			_, fileExt, ok := CheckFileAllowed(prefetchUrl)
-			if !ok {
-				return
+		go func(prefetchUrl string) {
+			if err := parseFileFetchCh(chRemote, prefetchUrl, imgConfig, appConfig); err != nil {
+				log.Println("[prefetchUrl error]", prefetchUrl, err.Error())
 			}
+		}(prefetchUrl)
 
-			var rawFile = models.Empty
-			var rawFileClean = models.Empty
-			tmpUrl, err := url.Parse(prefetchUrl)
-			if err != nil {
-				return
-			}
-			rawFile = fmt.Sprintf("%s/%s", strings.TrimRight(tmpUrl.Host, "/"), strings.TrimLeft(tmpUrl.Path, "/"))
-			tmpRawUrl, err := url.Parse(rawFile)
-			if err != nil {
-				rawFileClean = tmpUrl.Path
-			} else {
-				rawFileClean = tmpRawUrl.Path
-			}
-			var id = utils.HashString(fmt.Sprintf("%s,%s", tmpUrl.Host, rawFileClean))
-			var featureId = "default"
-
-			var localMeta = models.LocalMeta{
-				Id:          id,
-				FeatureId:   featureId,
-				Remote:      true,
-				Origin:      tmpUrl.Host,
-				Ext:         fileExt,
-				RemoteLocal: rawFile,
-				Raw:         rawFile,
-				Size:        0,
-			}
-
-			localMeta.RemoteLocal = utils.GetRemoteLocalFilePath(id, localMeta.Origin, fileExt)
-
-			if utils.FileSize(localMeta.RemoteLocal) > 0 {
-				// 文件已经存在
-				return
-			}
-
-			// 需要回源，清理老数据
-			utils.RemoveCache(localMeta.RemoteLocal)
-			utils.RemoveMeta(id, localMeta.Origin)
-			utils.LogMeta(id, localMeta.Origin, rawFile, models.Empty)
-
-			log.Println("[fetch source]", rawFile, "=>", localMeta.RemoteLocal)
-
-			if err = downloadFile(rawFile, localMeta.RemoteLocal); err != nil {
-				log.Println("[prefetch error]", rawFile, err.Error())
-				return
-			}
-
-		}(chRemote, prefetchUrl)
 	}
 
 	// 本地
 	var prefetchLocalList = loadLocalPrefetchList()
+	var chLocal = make(chan bool, models.LocalConfig.App.PrefetchThreads)
 
 	log.Println("[prefetch local]", utils.ToJsonString(fiber.Map{"file": models.LocalConfig.App.PrefetchThreads, "lines": len(prefetchLocalList), "threads": models.LocalConfig.App.PrefetchThreads}, false))
 
-	var chLocal = make(chan bool, models.LocalConfig.App.PrefetchThreads)
 	for _, prefetchUrl := range prefetchLocalList {
 		chLocal <- true
-		go func(ch chan bool, prefetchUrl string) {
-			//任务，结束后  <-ch 释放chan空间
-			defer func() { _ = <-ch }()
 
-			_, fileExt, ok := CheckFileAllowed(prefetchUrl)
-			if !ok {
-				return
+		go func(prefetchUrl string) {
+			if err := parseFileFetchCh(chLocal, prefetchUrl, imgConfig, appConfig); err != nil {
+				log.Println("[prefetchUrl error]", prefetchUrl, err.Error())
 			}
+		}(prefetchUrl)
 
-			var rawFile = models.Empty
-			var rawFileClean = models.Empty
-			tmpUrl, err := url.Parse(prefetchUrl)
-			if err != nil {
-				return
-			}
-			rawFile = fmt.Sprintf("%s/%s", strings.TrimRight(tmpUrl.Host, "/"), strings.TrimLeft(tmpUrl.Path, "/"))
-			tmpRawUrl, err := url.Parse(rawFile)
-			if err != nil {
-				rawFileClean = tmpUrl.Path
-			} else {
-				rawFileClean = tmpRawUrl.Path
-			}
-			var id = utils.HashString(fmt.Sprintf("%s,%s", tmpUrl.Host, rawFileClean))
-			var featureId = "default"
-
-			var localMeta = models.LocalMeta{
-				Id:          id,
-				FeatureId:   featureId,
-				Remote:      true,
-				Origin:      tmpUrl.Host,
-				Ext:         fileExt,
-				RemoteLocal: rawFile,
-				Raw:         rawFile,
-				Size:        0,
-			}
-
-			localMeta.RemoteLocal = utils.GetRemoteLocalFilePath(id, localMeta.Origin, fileExt)
-
-			if utils.FileSize(localMeta.RemoteLocal) > 0 {
-				// 文件已经存在
-				return
-			}
-
-			// 需要回源，清理老数据
-			utils.RemoveCache(localMeta.RemoteLocal)
-			utils.RemoveMeta(id, localMeta.Origin)
-			utils.LogMeta(id, localMeta.Origin, rawFile, models.Empty)
-
-			log.Println("[fetch source]", rawFile, "=>", localMeta.RemoteLocal)
-
-			if err = downloadFile(rawFile, localMeta.RemoteLocal); err != nil {
-				log.Println("[prefetch error]", rawFile, err.Error())
-				return
-			}
-
-		}(chLocal, prefetchUrl)
 	}
 
 	log.Println("[prefetch done]")
+	return nil
+}
+
+func parseFileFetchCh(ch chan bool, prefetchUrl string, imgConfig *models.ImageConfig, appConfig *models.AppConfig) error {
+	defer func() { _ = <-ch }()
+
+	tmpUrl, err := url.Parse(prefetchUrl)
+	if err != nil {
+		return err
+	}
+	if len(tmpUrl.Host) > 0 {
+		appConfig.OriginSite = tmpUrl.Host
+		appConfig.LocalPath = ""
+		appConfig.Refresh = 0
+		prefetchUrl = tmpUrl.Path
+	} else {
+		appConfig.OriginSite = ""
+		appConfig.LocalPath = prefetchUrl
+		appConfig.Refresh = 0
+	}
+
+	localMeta, err := HandleLocalMeta(prefetchUrl, imgConfig, appConfig)
+
+	if utils.FileSize(localMeta.RemoteLocal) > 0 {
+		// 文件已经存在
+		return errors.New("prefetch file exists")
+	}
+
+	// 需要回源，清理老数据
+	utils.RemoveCache(localMeta.RemoteLocal)
+	utils.RemoveMeta(localMeta.Id, localMeta.Origin)
+	utils.LogMeta(localMeta.Id, localMeta.Origin, localMeta.Raw, models.Empty)
+
+	log.Println("[fetch source]", localMeta.Raw, "=>", localMeta.RemoteLocal)
+
+	if err = downloadFile(localMeta.Raw, localMeta.RemoteLocal); err != nil {
+		log.Println("[prefetch error]", localMeta.Raw, err.Error())
+		return err
+	}
+
 	return nil
 }
