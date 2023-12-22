@@ -102,57 +102,54 @@ func CheckSupported(httpAccept, httpUA string) map[string]bool {
 }
 
 func HandleLocalMeta(pathOrUrl string, imgConfig *models.ImageConfig, appConfig *models.AppConfig) (models.LocalMeta, error) {
-	var remote = false
-	var rawFile = models.Empty
-	var rawFileClean = models.Empty
-	var originHost = models.Local
-	var rawVersion = models.Empty
-	var localMeta models.LocalMeta
+	var rawFileClean = ""
+	var localMeta = models.LocalMeta{
+		Id:          "",
+		FeatureId:   "default",
+		Origin:      models.Local,
+		Remote:      false,
+		Ext:         "",
+		RemoteLocal: "",
+		Raw:         "",
+		RawVersion:  "",
+		Size:        0,
+	}
 
 	pathUri, fileExt, ok := CheckFileAllowed(pathOrUrl)
 	if !ok {
 		return localMeta, errors.New("file type not support")
 	}
 
+	localMeta.Ext = fileExt
+
 	if len(appConfig.OriginSite) != 0 {
-		remote = true
+		localMeta.Remote = true
 		tmpUrl, err := url.Parse(appConfig.OriginSite)
 		if err != nil {
 			tmpUrl.Host = models.Local
 		}
-		originHost = tmpUrl.Host
+		localMeta.Origin = tmpUrl.Host
 
-		rawFile = fmt.Sprintf("%s/%s", strings.TrimRight(appConfig.OriginSite, "/"), strings.TrimLeft(pathOrUrl, "/"))
+		localMeta.Raw = fmt.Sprintf("%s/%s", strings.TrimRight(appConfig.OriginSite, "/"), strings.TrimLeft(pathOrUrl, "/"))
 		if appConfig.Refresh == 1 {
-			rawVersion = utils.GetResourceVersion(rawFile, nil)
+			localMeta.RawVersion = utils.GetResourceVersion(localMeta.Raw, nil)
 		}
 	} else {
-		rawFile = path.Join(appConfig.LocalPath, pathUri) // 不能使用带参数的uri路径
+		localMeta.Raw = path.Join(appConfig.LocalPath, pathUri) // 不能使用带参数的uri路径
 	}
-	tmpUrl, err := url.Parse(rawFile)
+
+	tmpUrl, err := url.Parse(localMeta.Raw)
 	if err != nil {
 		rawFileClean = pathOrUrl
 	} else {
 		rawFileClean = tmpUrl.Path
 	}
 
-	var id = utils.HashString(fmt.Sprintf("%s,%s", appConfig.OriginSite, rawFileClean))
-	var featureId = "default"
+	localMeta.Id = utils.HashString(fmt.Sprintf("%s,%s", appConfig.OriginSite, rawFileClean))
 	if !utils.IsDefaultObj(*imgConfig, []string{"HttpAccept", "HttpUA", "Src"}) {
-		featureId = utils.HashString(fmt.Sprintf("%v", imgConfig))[:6]
+		localMeta.FeatureId = utils.HashString(fmt.Sprintf("%v", imgConfig))[:6]
 	}
-
-	localMeta = models.LocalMeta{
-		Id:          id,
-		FeatureId:   featureId,
-		Remote:      remote,
-		Origin:      originHost,
-		Ext:         fileExt,
-		RemoteLocal: rawFile,
-		Raw:         rawFile,
-		RawVersion:  rawVersion,
-		Size:        0,
-	}
+	localMeta.RemoteLocal = localMeta.Raw
 
 	return localMeta, nil
 }
