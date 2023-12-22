@@ -74,3 +74,11 @@ type LocalMeta struct {
 	Raw         string
 	Size        int64
 }
+
+type LocalAppConfig struct {
+	App struct {
+		Remote   string `json:"remote"`
+		Local    string `json:"local"`
+		Prefetch bool   `json:"prefetch"`
+	} `json:"app"`
+}

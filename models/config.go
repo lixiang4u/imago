@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"github.com/patrickmn/go-cache"
 	"github.com/spf13/viper"
 	"log"
@@ -38,7 +39,7 @@ var (
 )
 
 func init() {
-	ConfigLocal = UploadRoot
+	LocalConfig.App.Local = UploadRoot
 
 	if _, err := os.Stat("config.toml"); err != nil {
 		log.Println("file config.toml, ", err.Error())
@@ -51,10 +52,15 @@ func init() {
 		return
 	}
 
-	ConfigRemote = viper.GetString("app.remote")
-	ConfigLocal = viper.GetString("app.local")
+	if err = viper.Unmarshal(&LocalConfig); err != nil {
+		log.Println("unmarshal config.toml, ", err.Error())
+		return
+	}
 
-	if len(ConfigRemote) == 0 && len(ConfigLocal) == 0 {
-		ConfigLocal = UploadRoot
+	buf, _ := json.Marshal(LocalConfig)
+	log.Println("[LocalConfig]", string(buf))
+
+	if len(LocalConfig.App.Remote) == 0 && len(LocalConfig.App.Local) == 0 {
+		LocalConfig.App.Local = UploadRoot
 	}
 }
