@@ -101,6 +101,62 @@ func CheckSupported(httpAccept, httpUA string) map[string]bool {
 	return supported
 }
 
+func HandleLocalMeta(pathOrUrl string, imgConfig *models.ImageConfig, appConfig *models.AppConfig) (models.LocalMeta, error) {
+	var remote = false
+	var rawFile = models.Empty
+	var rawFileClean = models.Empty
+	var originHost = models.Local
+	var rawVersion = models.Empty
+	var localMeta models.LocalMeta
+
+	pathUri, fileExt, ok := CheckFileAllowed(pathOrUrl)
+	if !ok {
+		return localMeta, errors.New("file type not support")
+	}
+
+	if len(appConfig.OriginSite) != 0 {
+		remote = true
+		tmpUrl, err := url.Parse(appConfig.OriginSite)
+		if err != nil {
+			tmpUrl.Host = models.Local
+		}
+		originHost = tmpUrl.Host
+
+		rawFile = fmt.Sprintf("%s/%s", strings.TrimRight(appConfig.OriginSite, "/"), strings.TrimLeft(pathOrUrl, "/"))
+		if appConfig.Refresh == 1 {
+			rawVersion = utils.GetResourceVersion(rawFile, nil)
+		}
+	} else {
+		rawFile = path.Join(appConfig.LocalPath, pathUri) // 不能使用带参数的uri路径
+	}
+	tmpUrl, err := url.Parse(rawFile)
+	if err != nil {
+		rawFileClean = pathOrUrl
+	} else {
+		rawFileClean = tmpUrl.Path
+	}
+
+	var id = utils.HashString(fmt.Sprintf("%s,%s", appConfig.OriginSite, rawFileClean))
+	var featureId = "default"
+	if !utils.IsDefaultObj(*imgConfig, []string{"HttpAccept", "HttpUA", "Src"}) {
+		featureId = utils.HashString(fmt.Sprintf("%v", imgConfig))[:6]
+	}
+
+	localMeta = models.LocalMeta{
+		Id:          id,
+		FeatureId:   featureId,
+		Remote:      remote,
+		Origin:      originHost,
+		Ext:         fileExt,
+		RemoteLocal: rawFile,
+		Raw:         rawFile,
+		RawVersion:  rawVersion,
+		Size:        0,
+	}
+
+	return localMeta, nil
+}
+
 func HandleToLocalPath(ctx *fiber.Ctx, imgConfig *models.ImageConfig, appConfig *models.AppConfig) (models.LocalMeta, error) {
 	var remote = false
 	var rawFile = models.Empty

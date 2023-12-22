@@ -72,6 +72,7 @@ type LocalMeta struct {
 	Ext         string
 	RemoteLocal string
 	Raw         string
+	RawVersion  string
 	Size        int64
 }
 
