@@ -34,8 +34,7 @@ var (
 	SUPPORT_TYPE_NATIVE = "native"
 )
 var (
-	ConfigRemote string
-	ConfigLocal  string
+	LocalConfig LocalAppConfig
 )
 
 func init() {
