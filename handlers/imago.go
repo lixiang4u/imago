@@ -36,7 +36,7 @@ func parseConfig(ctx *fiber.Ctx) models.ImageConfig {
 		}
 	}
 
-	log.Println("[QueryParser]", utils.ToJsonString(config, false))
+	log.Println("[QueryParser]", ctx.OriginalURL(), utils.ToJsonString(config, false))
 
 	config.HttpUA = string(ctx.Request().Header.Peek("User-Agent"))
 	config.HttpAccept = string(ctx.Request().Header.Peek("Accept"))

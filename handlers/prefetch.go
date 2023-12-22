@@ -121,22 +121,33 @@ func parseFileFetchCh(ch chan bool, prefetchUrl string, imgConfig *models.ImageC
 	}
 
 	localMeta, err := HandleLocalMeta(prefetchUrl, imgConfig, appConfig)
+	if err != nil {
+		log.Println("[parse meta]", err.Error())
+		return err
+	}
+
+	log.Println("[debug]", utils.ToJsonString(fiber.Map{
+		"prefetchUrl": prefetchUrl,
+		"localMeta":   localMeta,
+	}, true))
 
 	if utils.FileSize(localMeta.RemoteLocal) > 0 {
 		// 文件已经存在
 		return errors.New("prefetch file exists")
 	}
 
-	// 需要回源，清理老数据
-	utils.RemoveCache(localMeta.RemoteLocal)
-	utils.RemoveMeta(localMeta.Id, localMeta.Origin)
-	utils.LogMeta(localMeta.Id, localMeta.Origin, localMeta.Raw, models.Empty)
+	if localMeta.Remote {
+		// 需要回源，清理老数据
+		utils.RemoveCache(localMeta.RemoteLocal)
+		utils.RemoveMeta(localMeta.Id, localMeta.Origin)
+		utils.LogMeta(localMeta.Id, localMeta.Origin, localMeta.Raw, models.Empty)
 
-	log.Println("[fetch source]", localMeta.Raw, "=>", localMeta.RemoteLocal)
+		log.Println("[fetch source]", localMeta.Raw, "=>", localMeta.RemoteLocal)
 
-	if err = downloadFile(localMeta.Raw, localMeta.RemoteLocal); err != nil {
-		log.Println("[prefetch error]", localMeta.Raw, err.Error())
-		return err
+		if err = downloadFile(localMeta.Raw, localMeta.RemoteLocal); err != nil {
+			log.Println("[prefetch error]", localMeta.Raw, err.Error())
+			return err
+		}
 	}
 
 	return nil

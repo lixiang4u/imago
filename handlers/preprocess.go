@@ -151,6 +151,8 @@ func HandleLocalMeta(pathOrUri string, imgConfig *models.ImageConfig, appConfig 
 	}
 	if localMeta.Remote {
 		localMeta.RemoteLocal = utils.GetRemoteLocalFilePath(localMeta.Id, localMeta.Origin, localMeta.Ext)
+	} else {
+		localMeta.RemoteLocal = rawFileClean
 	}
 
 	return localMeta, nil
