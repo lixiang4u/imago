@@ -130,6 +130,12 @@ func HandleToLocalPath(ctx *fiber.Ctx, imgConfig *models.ImageConfig, appConfig 
 	} else {
 		rawFile = path.Join(appConfig.LocalPath, pathUri) // 不能使用带参数的uri路径
 	}
+	tmpUrl, err := url.Parse(rawFile)
+	if err != nil {
+		rawFileClean = requestUri
+	} else {
+		rawFileClean = tmpUrl.Path
+	}
 
 	var id = utils.HashString(fmt.Sprintf("%s,%s", appConfig.OriginSite, rawFileClean))
 	var featureId = "default"

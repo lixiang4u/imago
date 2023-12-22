@@ -77,8 +77,9 @@ type LocalMeta struct {
 
 type LocalAppConfig struct {
 	App struct {
-		Remote   string `json:"remote"`
-		Local    string `json:"local"`
-		Prefetch bool   `json:"prefetch"`
+		Remote          string `json:"remote"`
+		Local           string `json:"local"`
+		Prefetch        bool   `json:"prefetch"`
+		PrefetchThreads int    `json:"prefetch_threads"`
 	} `json:"app"`
 }

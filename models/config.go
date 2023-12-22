@@ -59,7 +59,14 @@ func init() {
 	buf, _ := json.Marshal(LocalConfig)
 	log.Println("[LocalConfig]", string(buf))
 
+	// 修正默认值
 	if len(LocalConfig.App.Remote) == 0 && len(LocalConfig.App.Local) == 0 {
 		LocalConfig.App.Local = UploadRoot
+	}
+	if LocalConfig.App.PrefetchThreads <= 0 {
+		LocalConfig.App.PrefetchThreads = 1
+	}
+	if LocalConfig.App.PrefetchThreads > 10000 {
+		LocalConfig.App.PrefetchThreads = 10000
 	}
 }
