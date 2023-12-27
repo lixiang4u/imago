@@ -9,3 +9,7 @@
     prefetch = true
     prefetch_threads = 10
 
+    # 支持持转换的格式：raw, webp, jpg, jpeg, png, gif, bmp, avif, heif
+    # raw 只会转为原图格式，多个格式会返回最小文件对应的格式
+    transform = ["raw"]
+

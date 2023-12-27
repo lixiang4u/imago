@@ -70,12 +70,8 @@ func CheckFileAllowed(fileName string) (pathUri, ext string, ok bool) {
 }
 
 func CheckSupported(httpAccept, httpUA string) map[string]bool {
-	var supported = map[string]bool{
-		models.SUPPORT_TYPE_RAW:  true,
-		models.SUPPORT_TYPE_WEBP: false,
-		models.SUPPORT_TYPE_AVIF: false,
-		models.SUPPORT_TYPE_JPG:  false,
-	}
+	var supported = models.LocalConfig.L.Supported
+	log.Println("[supported]", utils.ToJsonString(supported, false))
 
 	if strings.Contains(httpAccept, "image/webp") {
 		supported[models.SUPPORT_TYPE_WEBP] = true

@@ -107,6 +107,9 @@ func ConvertAndGetSmallestImage(
 			continue
 		}
 		switch fileType {
+		case models.SUPPORT_TYPE_RAW:
+			fileType = localMeta.Ext
+			fallthrough
 		case models.SUPPORT_TYPE_WEBP:
 			fallthrough
 		case models.SUPPORT_TYPE_AVIF:

@@ -68,4 +68,28 @@ func init() {
 	if LocalConfig.App.PrefetchThreads > 10000 {
 		LocalConfig.App.PrefetchThreads = 10000
 	}
+	LocalConfig.L.Supported = make(map[string]bool)
+	for _, t := range LocalConfig.App.Transform {
+		switch t {
+		case SUPPORT_TYPE_RAW:
+			fallthrough
+		case SUPPORT_TYPE_WEBP:
+			fallthrough
+		case SUPPORT_TYPE_AVIF:
+			fallthrough
+		case SUPPORT_TYPE_JPG:
+			fallthrough
+		case SUPPORT_TYPE_BMP:
+			fallthrough
+		case SUPPORT_TYPE_GIF:
+			fallthrough
+		case SUPPORT_TYPE_JPEG:
+			fallthrough
+		case SUPPORT_TYPE_PNG:
+			fallthrough
+		case SUPPORT_TYPE_NATIVE:
+			LocalConfig.L.Supported[t] = true
+		}
+	}
+
 }

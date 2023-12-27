@@ -78,9 +78,14 @@ type LocalMeta struct {
 
 type LocalAppConfig struct {
 	App struct {
-		Remote          string `json:"remote"`
-		Local           string `json:"local"`
-		Prefetch        bool   `json:"prefetch"`
-		PrefetchThreads int    `json:"prefetch_threads"`
+		Remote          string   `json:"remote"`
+		Local           string   `json:"local"`
+		Prefetch        bool     `json:"prefetch"`
+		PrefetchThreads int      `json:"prefetch_threads"`
+		Transform       []string `json:"transform"`
 	} `json:"app"`
+	// 内存数据
+	L struct {
+		Supported map[string]bool
+	} `json:"l"`
 }
