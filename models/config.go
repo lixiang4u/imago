@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/viper"
 	"log"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -38,8 +39,6 @@ var (
 )
 
 func init() {
-	LocalConfig.App.Local = UploadRoot
-
 	if _, err := os.Stat("config.toml"); err != nil {
 		log.Println("file config.toml, ", err.Error())
 		return
@@ -61,7 +60,7 @@ func init() {
 
 	// 修正默认值
 	if len(LocalConfig.App.Remote) == 0 && len(LocalConfig.App.Local) == 0 {
-		LocalConfig.App.Local = UploadRoot
+		LocalConfig.App.Local, _ = filepath.Abs(UploadRoot)
 	}
 	if LocalConfig.App.PrefetchThreads <= 0 {
 		LocalConfig.App.PrefetchThreads = 1

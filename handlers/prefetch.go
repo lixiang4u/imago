@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/lixiang4u/imago/models"
@@ -31,7 +30,10 @@ func loadRemotePrefetchList() []string {
 		if err != nil {
 			break // 读取完毕或发生错误时退出循环
 		}
-		line = strings.TrimPrefix(strings.TrimSpace(line), "#")
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "#") {
+			continue
+		}
 		if !strings.HasPrefix(line, "http://") && !strings.HasPrefix(line, "https://") {
 			continue
 		}
@@ -74,7 +76,7 @@ func Prefetch() error {
 	var supported = map[string]bool{
 		models.SUPPORT_TYPE_RAW:  true,
 		models.SUPPORT_TYPE_WEBP: true,
-		models.SUPPORT_TYPE_AVIF: true,
+		models.SUPPORT_TYPE_AVIF: false,
 		models.SUPPORT_TYPE_JPG:  true,
 	}
 
@@ -125,7 +127,7 @@ func parseFileFetchCh(ch chan bool, prefetchUrl string, supported map[string]boo
 	}
 
 	if len(tmpUrl.Host) > 0 {
-		appConfig.OriginSite = tmpUrl.Host
+		appConfig.OriginSite = fmt.Sprintf("%s://%s", tmpUrl.Scheme, tmpUrl.Host)
 		appConfig.LocalPath = ""
 		appConfig.Refresh = 0
 		prefetchUrl = tmpUrl.Path
@@ -144,12 +146,12 @@ func parseFileFetchCh(ch chan bool, prefetchUrl string, supported map[string]boo
 
 	log.Println("[debug]", utils.ToJsonString(localMeta, true))
 
-	if utils.FileSize(localMeta.RemoteLocal) > 0 {
-		// 文件已经存在
-		return errors.New("prefetch file exists")
-	}
+	//if utils.FileSize(localMeta.RemoteLocal) > 0 {
+	//	// 文件已经存在
+	//	return nil
+	//}
 
-	if localMeta.Remote {
+	if localMeta.Remote && !utils.FileExists(localMeta.RemoteLocal) {
 		// 需要回源，清理老数据
 		utils.RemoveCache(localMeta.RemoteLocal)
 		utils.RemoveMeta(localMeta.Id, localMeta.Origin)

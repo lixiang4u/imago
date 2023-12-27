@@ -8,3 +8,4 @@
     # 是否预处理源图片
     prefetch = true
     prefetch_threads = 10
+

@@ -175,7 +175,7 @@ func ConvertImage(
 	}
 	defer img.Close()
 
-	log.Println("[converting]", rawFile, "=>", convertedFile, format, "=>", img.Format().FileExt())
+	log.Println("[converting]", rawFile, "=>", convertedFile, img.Format().FileExt(), "=>", format)
 
 	img = ImageFilter(img, imgConfig)
 
