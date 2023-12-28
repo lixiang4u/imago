@@ -46,10 +46,12 @@ func parseConfig(ctx *fiber.Ctx) models.ImageConfig {
 
 func Image(ctx *fiber.Ctx) error {
 	var imgConfig = parseConfig(ctx)
-	var appConfig = models.AppConfig{
-		OriginSite: models.LocalConfig.App.Remote,
-		LocalPath:  models.LocalConfig.App.Local,
-		Refresh:    imgConfig.Refresh,
+	var appConfig models.AppConfig
+	appConfig, err := models.GetHostUserConfig(string(ctx.Request().Host()))
+	if err != nil {
+		return ctx.JSON(fiber.Map{
+			"error": err.Error(),
+		})
 	}
 	localMeta, err := HandleToLocalPath(ctx, &imgConfig, &appConfig)
 	if err != nil {
@@ -66,6 +68,7 @@ func Image(ctx *fiber.Ctx) error {
 		Lossless:      false,
 	}
 
+	log.Println("[appConfig]", utils.ToJsonString(appConfig, false))
 	log.Println("[raw meta]", utils.ToJsonString(localMeta, false))
 
 	// 源文件不存在

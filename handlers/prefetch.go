@@ -67,7 +67,9 @@ func Prefetch() error {
 	log.Println("[prefetch run]")
 
 	var imgConfig = &models.ImageConfig{}
-	var appConfig = &models.AppConfig{}
+	var appConfig models.AppConfig
+	appConfig, _ = models.GetHostUserConfig(models.Empty)
+
 	var exportConfig = &models.ExportConfig{
 		StripMetadata: true,
 		Quality:       int(imgConfig.Quality),
@@ -90,7 +92,7 @@ func Prefetch() error {
 		chRemote <- true
 
 		go func(prefetchUrl string) {
-			if err := parseFileFetchCh(chRemote, prefetchUrl, supported, exportConfig, imgConfig, appConfig); err != nil {
+			if err := parseFileFetchCh(chRemote, prefetchUrl, supported, exportConfig, imgConfig, &appConfig); err != nil {
 				log.Println("[prefetchUrl error]", prefetchUrl, err.Error())
 			}
 		}(prefetchUrl)
@@ -107,7 +109,7 @@ func Prefetch() error {
 		chLocal <- true
 
 		go func(prefetchUrl string) {
-			if err := parseFileFetchCh(chLocal, prefetchUrl, supported, exportConfig, imgConfig, appConfig); err != nil {
+			if err := parseFileFetchCh(chLocal, prefetchUrl, supported, exportConfig, imgConfig, &appConfig); err != nil {
 				log.Println("[prefetchUrl error]", prefetchUrl, err.Error())
 			}
 		}(prefetchUrl)
