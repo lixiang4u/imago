@@ -6,6 +6,7 @@ type AppConfig struct {
 	LocalPath  string //本地位置（原图本地位置）
 	ProxyHost  string //代理域名（用户请求代理域名，最终源文件在OriginSite）
 	Refresh    int    //是否回源，1.是，0.否
+	Debug      bool   //是否调试模式
 }
 
 type ExportConfig struct {

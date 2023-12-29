@@ -71,6 +71,8 @@ func Image(ctx *fiber.Ctx) error {
 	log.Println("[appConfig]", utils.ToJsonString(appConfig, false))
 	log.Println("[raw meta]", utils.ToJsonString(localMeta, false))
 
+	reqCount, _ := models.IncrementRequestCount(appConfig.ProxyHost)
+
 	// 源文件不存在
 	if !utils.FileExists(localMeta.RemoteLocal) {
 		//utils.RemoveMeta(localMeta.Id, localMeta.Origin)
@@ -88,9 +90,14 @@ func Image(ctx *fiber.Ctx) error {
 
 	var mime = utils.GetFileMIME(convertedFile)
 
+	reqOkCount, _ := models.IncrementRequestOkCount(appConfig.ProxyHost)
+
 	ctx.Set("Content-Type", mime.Value)
 	ctx.Set("X-Compression-Rate", utils.CompressRate(localMeta.Size, convertedSize))
 	ctx.Set("X-Server", "imago")
+	if appConfig.Debug {
+		ctx.Set("X-Stat", fmt.Sprintf("total: %d, success:%d", reqCount, reqOkCount))
+	}
 	return ctx.SendFile(convertedFile)
 }
 
