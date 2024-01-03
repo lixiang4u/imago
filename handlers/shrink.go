@@ -129,7 +129,7 @@ func Shrink(ctx *fiber.Ctx) error {
 
 	return ctx.JSON(fiber.Map{
 		"status": "ok",
-		"url":    _converted,
+		"url":    fmt.Sprintf("%s/%s", strings.TrimRight(appConfig.OriginSite, "/"), strings.TrimLeft(_converted, "/")),
 		"size":   _size,
 		"rate":   utils.CompressRate(localMeta.Size, _size),
 		"time":   time.Now().Format("2006-01-02 15:04:05"),

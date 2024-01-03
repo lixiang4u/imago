@@ -13,6 +13,11 @@ import (
 	"time"
 )
 
+func AppPath() string {
+	p, _ := filepath.Abs(filepath.Dir(os.Args[0]))
+	return p
+}
+
 func GetRemoteLocalFilePath(id, originHost, fileExt string) string {
 	var p = path.Join(models.RemoteRoot, originHost, id[:2], fmt.Sprintf("%s.%s", id, fileExt))
 	return p
