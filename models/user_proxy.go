@@ -26,7 +26,7 @@ func (UserProxy) TableName() string {
 
 func GetHostUserProxy(host string) (userProxy UserProxy, err error) {
 	if err := DB().Model(&userProxy).Where("host", host).Take(&userProxy).Error; err != nil {
-		return
+		return userProxy, err
 	}
 	return userProxy, nil
 }

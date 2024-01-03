@@ -16,7 +16,11 @@ type CacheMapValue struct {
 	Timestamp int64
 }
 
-type NsqConsumeHandler struct{}
+type NsqConsumeHandler struct {
+	consumer1 *nsq.Consumer
+	consumer2 *nsq.Consumer
+	consumer3 *nsq.Consumer
+}
 type NsqRequestHandler struct{}
 type NsqRequestStatHandler struct {
 	m sync.Map
@@ -25,17 +29,23 @@ type NsqUserFilesHandler struct {
 	m sync.Map
 }
 
-func (x NsqConsumeHandler) HandleMessage() error {
+func (x *NsqConsumeHandler) HandleMessage() error {
+	var err error
 	var h1 = &NsqRequestHandler{}
-	if err := models.NsqConsumer(models.TopicRequest, models.NsqChannel, h1); err != nil {
+	x.consumer1, err = models.NsqConsumer(models.TopicRequest, models.NsqChannel, h1)
+	if err != nil {
 		return err
 	}
+
 	var h2 = &NsqRequestStatHandler{}
-	if err := models.NsqConsumer(models.TopicRequestStat, models.NsqChannel, h2); err != nil {
+	x.consumer2, err = models.NsqConsumer(models.TopicRequestStat, models.NsqChannel, h2)
+	if err != nil {
 		return err
 	}
+
 	var h3 = &NsqUserFilesHandler{}
-	if err := models.NsqConsumer(models.TopicUserFiles, models.NsqChannel, h3); err != nil {
+	x.consumer3, err = models.NsqConsumer(models.TopicUserFiles, models.NsqChannel, h3)
+	if err != nil {
 		return err
 	}
 
@@ -53,6 +63,21 @@ func (x NsqConsumeHandler) HandleMessage() error {
 	}()
 
 	return nil
+}
+
+func (x *NsqConsumeHandler) NsqStop() {
+	if x.consumer1 != nil {
+		log.Println("consumer1.Stop()")
+		x.consumer1.Stop()
+	}
+	if x.consumer2 != nil {
+		log.Println("consumer2.Stop()")
+		x.consumer2.Stop()
+	}
+	if x.consumer3 != nil {
+		log.Println("consumer3.Stop()")
+		x.consumer3.Stop()
+	}
 }
 
 func (x NsqRequestHandler) HandleMessage(message *nsq.Message) error {

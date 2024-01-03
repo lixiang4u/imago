@@ -4,9 +4,6 @@ import (
 	"errors"
 	"github.com/nsqio/go-nsq"
 	"log"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 var (
@@ -20,27 +17,20 @@ var (
 	nsqProducer      *nsq.Producer
 )
 
-func NsqConsumer(topic, channel string, handler nsq.Handler) error {
-	consumer, err := nsq.NewConsumer(topic, channel, nsqConfig)
+func NsqConsumer(topic, channel string, handler nsq.Handler) (consumer *nsq.Consumer, err error) {
+	consumer, err = nsq.NewConsumer(topic, channel, nsqConfig)
 	if err != nil {
-		return err
+		return
 	}
 
 	consumer.AddHandler(handler)
 
 	err = consumer.ConnectToNSQLookupd(nsqLookupdAddr)
 	if err != nil {
-		return err
+		return
 	}
 
-	var sig = make(chan os.Signal, 1)
-	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
-	<-sig
-
-	// Gracefully stop the consumer.
-	consumer.Stop()
-
-	return nil
+	return consumer, nil
 }
 
 func GetNsqProducer() *nsq.Producer {
