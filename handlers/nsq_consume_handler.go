@@ -121,21 +121,20 @@ func (x *NsqRequestStatHandler) HandleMessage(message *nsq.Message) error {
 		id = findRequestStat.Id
 		x.m.Store(mKey, CacheMapValue{Id: id, Timestamp: time.Now().Unix()})
 	} else {
-		id = v.(CacheMapValue).Id
-	}
-	txErr := models.DB().Transaction(func(tx *gorm.DB) error {
-		if e := models.DB().Model(&tmpRequestStat).Where("id", id).Updates(map[string]interface{}{
-			"request_count": gorm.Expr("request_count+?", tmpRequestStat.RequestCount),
-			"response_byte": gorm.Expr("response_byte+?", tmpRequestStat.ResponseByte),
-			"saved_byte":    gorm.Expr("saved_byte+?", tmpRequestStat.SavedByte),
-		}).Error; e != nil {
-			return e
+		txErr := models.DB().Transaction(func(tx *gorm.DB) error {
+			if e := models.DB().Model(&tmpRequestStat).Where("id", v.(CacheMapValue).Id).Updates(map[string]interface{}{
+				"request_count": gorm.Expr("request_count+?", tmpRequestStat.RequestCount),
+				"response_byte": gorm.Expr("response_byte+?", tmpRequestStat.ResponseByte),
+				"saved_byte":    gorm.Expr("saved_byte+?", tmpRequestStat.SavedByte),
+			}).Error; e != nil {
+				return e
+			}
+			return nil
+		})
+		if txErr != nil {
+			log.Println("[txErr.Error]", txErr.Error())
+			return txErr
 		}
-		return nil
-	})
-	if txErr != nil {
-		log.Println("[txErr.Error]", txErr.Error())
-		return txErr
 	}
 
 	return nil

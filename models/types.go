@@ -77,6 +77,7 @@ type LocalMeta struct {
 	Raw         string // 源文件的位置（本地或者远程URL）
 	RawVersion  string
 	Size        int64
+	FetchSource bool
 }
 
 type LocalAppConfig struct {

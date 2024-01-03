@@ -79,10 +79,13 @@ func Image(ctx *fiber.Ctx) error {
 		ProxyId:   appConfig.ProxyId,
 		MetaId:    localMeta.Id,
 		OriginUrl: localMeta.Raw,
-		Referer:   ctx.Get("Referer"),
+		Referer:   ctx.Get("Referer") + ", " + imgConfig.HttpUA,
 		Ip:        ctx.IP(),
-		IsCache:   0,
+		IsCache:   1,
 		CreatedAt: now,
+	}
+	if localMeta.FetchSource {
+		requestLog.IsCache = 0
 	}
 
 	reqCount, _ := models.RequestMessage(appConfig.ProxyHost)

@@ -194,6 +194,7 @@ func HandleToLocalPath(ctx *fiber.Ctx, imgConfig *models.ImageConfig, appConfig 
 	}
 
 	localMeta.Size = utils.FileSize(localMeta.RemoteLocal)
+	localMeta.FetchSource = true
 
 	return localMeta, nil
 }
