@@ -20,6 +20,12 @@ func Shrink(ctx *fiber.Ctx) error {
 		Quality:       int(imgConfig.Quality),
 		Lossless:      false,
 	}
+	appConfig, err := models.GetHostUserConfig(string(ctx.Request().Host()))
+	if err != nil {
+		return ctx.JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
 
 	fh, err := ctx.FormFile("file")
 	if err != nil {
@@ -80,8 +86,22 @@ func Shrink(ctx *fiber.Ctx) error {
 
 	var convertedFile = fmt.Sprintf("%s.%s.%s", localMeta.Raw, localMeta.FeatureId, dstFormat)
 
+	var requestLog = &models.RequestLog{
+		UserId:    appConfig.UserId,
+		ProxyId:   appConfig.ProxyId,
+		MetaId:    localMeta.Id,
+		OriginUrl: localMeta.Raw,
+		Referer:   ctx.Get("Referer") + ", " + imgConfig.HttpUA,
+		Ip:        ctx.IP(),
+		IsCache:   0,
+		CreatedAt: time.Now(),
+	}
+
 	if utils.FileExists(convertedFile) {
 		var _size = utils.FileSize(convertedFile)
+
+		go prepareShrinkLog(convertedFile, _size, 1, requestLog, &localMeta, &appConfig)
+
 		return ctx.JSON(fiber.Map{
 			"status": "ok",
 			"url":    convertedFile,
@@ -105,6 +125,8 @@ func Shrink(ctx *fiber.Ctx) error {
 		})
 	}
 
+	go prepareShrinkLog(convertedFile, _size, 0, requestLog, &localMeta, &appConfig)
+
 	return ctx.JSON(fiber.Map{
 		"status": "ok",
 		"url":    _converted,
@@ -112,4 +134,34 @@ func Shrink(ctx *fiber.Ctx) error {
 		"rate":   utils.CompressRate(localMeta.Size, _size),
 		"time":   time.Now().Format("2006-01-02 15:04:05"),
 	})
+}
+
+func prepareShrinkLog(convertedFile string, convertedSize int64, isExist int8, requestLog *models.RequestLog, localMeta *models.LocalMeta, appConfig *models.AppConfig) {
+	var now = time.Now()
+
+	requestLog.IsExist = isExist
+	_ = prepareRequestLog(requestLog, 0, 1)
+
+	_ = prepareRequestStat(&models.RequestStat{
+		UserId:       appConfig.UserId,
+		ProxyId:      appConfig.ProxyId,
+		MetaId:       localMeta.Id,
+		OriginUrl:    localMeta.Raw,
+		RequestCount: 1,
+		ResponseByte: uint64(convertedSize),
+		SavedByte:    uint64(localMeta.Size - convertedSize),
+		CreatedAt:    now,
+	})
+	_ = prepareUserFiles(&models.UserFiles{
+		UserId:      appConfig.UserId,
+		ProxyId:     appConfig.ProxyId,
+		MetaId:      localMeta.Id,
+		OriginUrl:   localMeta.Raw,
+		OriginFile:  localMeta.RemoteLocal,
+		ConvertFile: convertedFile,
+		OriginSize:  uint64(localMeta.Size),
+		ConvertSize: uint64(convertedSize),
+		CreatedAt:   now,
+	})
+
 }

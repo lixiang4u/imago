@@ -22,8 +22,6 @@ func main() {
 
 	app := fiber.New()
 	//app.Use(etag.New(etag.Config{Weak: true}))
-	app.Get("/ping", handlers.Ping)
-	app.Post("/shrink", handlers.Shrink)
 	app.Get("/*", handlers.Image)
 
 	log.Fatal(app.Listen(":8020"))
