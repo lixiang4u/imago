@@ -1,7 +1,8 @@
 package models
 
 type AppConfig struct {
-	UserId     string // 用户ID
+	UserId     uint64 // 用户ID
+	ProxyId    uint64 // 代理ID
 	OriginSite string //原始域名（原图域）
 	LocalPath  string //本地位置（原图本地位置）
 	ProxyHost  string //代理域名（用户请求代理域名，最终源文件在OriginSite）
@@ -86,6 +87,9 @@ type LocalAppConfig struct {
 		PrefetchThreads int      `json:"prefetch_threads"`
 		Transform       []string `json:"transform"`
 	} `json:"app"`
+	MySQL struct {
+		Dsn string `json:"dsn"`
+	} `json:"mysql"`
 	// 内存数据
 	L struct {
 		Supported map[string]bool

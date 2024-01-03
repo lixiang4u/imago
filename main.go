@@ -9,6 +9,11 @@ import (
 
 func main() {
 
+	var h = handlers.NsqConsumeHandler{}
+	if err := h.HandleMessage(); err != nil {
+		log.Println("[nsq.HandleMessage.Error]", err.Error())
+	}
+
 	if models.LocalConfig.App.Prefetch {
 		go func() { _ = handlers.Prefetch() }()
 	}

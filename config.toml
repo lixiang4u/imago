@@ -13,3 +13,6 @@
     # raw 只会转为原图格式，多个格式会返回最小文件对应的格式
     transform = ["raw"]
 
+[mysql]
+    dsn = "root:passwd@tcp(127.0.0.1:3306)/imago?charset=utf8mb4&parseTime=True&loc=Local"
+

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/davidbyttow/govips/v2/vips"
 	"github.com/gofiber/fiber/v2"
@@ -11,6 +12,7 @@ import (
 	"path"
 	"runtime"
 	"sync"
+	"time"
 )
 
 func init() {
@@ -45,6 +47,7 @@ func parseConfig(ctx *fiber.Ctx) models.ImageConfig {
 }
 
 func Image(ctx *fiber.Ctx) error {
+	var now = time.Now()
 	var imgConfig = parseConfig(ctx)
 	var appConfig models.AppConfig
 	appConfig, err := models.GetHostUserConfig(string(ctx.Request().Host()))
@@ -71,15 +74,29 @@ func Image(ctx *fiber.Ctx) error {
 	log.Println("[appConfig]", utils.ToJsonString(appConfig, false))
 	log.Println("[raw meta]", utils.ToJsonString(localMeta, false))
 
-	reqCount, _ := models.IncrementRequestCount(appConfig.ProxyHost)
+	var requestLog = &models.RequestLog{
+		UserId:    appConfig.UserId,
+		ProxyId:   appConfig.ProxyId,
+		MetaId:    localMeta.Id,
+		OriginUrl: localMeta.Raw,
+		Referer:   ctx.Get("Referer"),
+		Ip:        ctx.IP(),
+		IsCache:   0,
+		CreatedAt: now,
+	}
+
+	reqCount, _ := models.RequestMessage(appConfig.ProxyHost)
 
 	// 源文件不存在
 	if !utils.FileExists(localMeta.RemoteLocal) {
+		go func() { _ = prepareRequestLog(requestLog, 0, 0) }()
 		//utils.RemoveMeta(localMeta.Id, localMeta.Origin)
 		_ = ctx.Send([]byte("raw file not found"))
 		_ = ctx.SendStatus(404)
 		return nil
 	}
+
+	go func() { _ = prepareRequestLog(requestLog, 0, 1) }()
 
 	convertedFile, convertedSize, ok := ConvertAndGetSmallestImage(localMeta, supported, &imgConfig, &exportConfig)
 	if !ok {
@@ -98,6 +115,32 @@ func Image(ctx *fiber.Ctx) error {
 	if appConfig.Debug {
 		ctx.Set("X-Stat", fmt.Sprintf("total: %d, success:%d", reqCount, reqOkCount))
 	}
+
+	// 统计
+	go func() {
+		_ = prepareRequestStat(&models.RequestStat{
+			UserId:       appConfig.UserId,
+			ProxyId:      appConfig.ProxyId,
+			MetaId:       localMeta.Id,
+			OriginUrl:    localMeta.Raw,
+			RequestCount: 1,
+			ResponseByte: uint64(convertedSize),
+			SavedByte:    uint64(localMeta.Size - convertedSize),
+			CreatedAt:    now,
+		})
+		_ = prepareUserFiles(&models.UserFiles{
+			UserId:      appConfig.UserId,
+			ProxyId:     appConfig.ProxyId,
+			MetaId:      localMeta.Id,
+			OriginUrl:   localMeta.Raw,
+			OriginFile:  localMeta.RemoteLocal,
+			ConvertFile: convertedFile,
+			OriginSize:  uint64(localMeta.Size),
+			ConvertSize: uint64(convertedSize),
+			CreatedAt:   now,
+		})
+	}()
+
 	return ctx.SendFile(convertedFile)
 }
 
@@ -205,4 +248,42 @@ func ConvertImage(
 	}
 
 	return converted, utils.FileSize(convertedFile), nil
+}
+
+func prepareRequestLog(requestLog *models.RequestLog, isCache, isExist int8) error {
+	requestLog.IsCache = isCache
+	requestLog.IsExist = isExist
+	buf, err := json.Marshal(requestLog)
+	if err != nil {
+		return err
+	}
+	err = models.NsqProducer(models.TopicRequest, buf)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func prepareRequestStat(requestStat *models.RequestStat) error {
+	buf, err := json.Marshal(requestStat)
+	if err != nil {
+		return err
+	}
+	err = models.NsqProducer(models.TopicRequestStat, buf)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func prepareUserFiles(userFiles *models.UserFiles) error {
+	buf, err := json.Marshal(userFiles)
+	if err != nil {
+		return err
+	}
+	err = models.NsqProducer(models.TopicUserFiles, buf)
+	if err != nil {
+		return err
+	}
+	return nil
 }
