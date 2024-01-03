@@ -4,6 +4,7 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"log"
+	"os"
 )
 
 var db *gorm.DB
@@ -17,7 +18,7 @@ func initDB() *gorm.DB {
 	db, err := gorm.Open(mysql.Open(LocalConfig.MySQL.Dsn), &gorm.Config{})
 	if err != nil {
 		log.Println("[gorm.Open.Error]", err.Error())
-		return nil
+		os.Exit(-1)
 	}
 	return db
 }
