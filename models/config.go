@@ -23,6 +23,7 @@ var (
 	UserAgent    = "Imago Service/1.0 (89f882e4f6ce47b8)"
 	MaxWebpPixel = 16383 // WebP is bitstream-compatible with VP8 and uses 14 bits for width and height. The maximum pixel dimensions of a WebP image is 16383 x 16383.
 	DEFAULT_UID  = uint64(100000)
+	SECRET_KEY   = "89f882e4f6ce47b8.926ec8e789f882e4f6ce47b876d7029c"
 
 	SUPPORT_TYPE_RAW    = "raw"
 	SUPPORT_TYPE_WEBP   = "webp"

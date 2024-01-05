@@ -14,3 +14,11 @@ type User struct {
 func (User) TableName() string {
 	return "user"
 }
+
+func GetLoginUser(username string) (u User, err error) {
+	u = User{}
+	if err = DB().Model(&u).Where("email", username).Take(&u).Error; err != nil {
+		return
+	}
+	return
+}
