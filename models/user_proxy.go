@@ -30,3 +30,11 @@ func GetHostUserProxy(host string) (userProxy UserProxy, err error) {
 	}
 	return userProxy, nil
 }
+
+func GetUserProxyCount(userId uint64) int64 {
+	var count int64
+	if err := DB().Model(&UserProxy{}).Where("user_id", userId).Count(&count).Error; err != nil {
+		return count
+	}
+	return count
+}
