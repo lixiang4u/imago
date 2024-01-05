@@ -91,7 +91,7 @@ func Shrink(ctx *fiber.Ctx) error {
 		ProxyId:   appConfig.ProxyId,
 		MetaId:    localMeta.Id,
 		OriginUrl: localMeta.Raw,
-		Referer:   ctx.Get("Referer") + ", " + imgConfig.HttpUA,
+		Referer:   utils.ToJsonString(map[string]string{"ua": imgConfig.HttpUA, "referer": ctx.Get("Referer")}, false),
 		Ip:        ctx.IP(),
 		IsCache:   0,
 		CreatedAt: time.Now(),

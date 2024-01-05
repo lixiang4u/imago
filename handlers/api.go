@@ -3,6 +3,7 @@ package handlers
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/lixiang4u/imago/utils"
+	"math"
 )
 
 func respSuccess(data interface{}, msg string) *fiber.Map {
@@ -20,6 +21,7 @@ func respSuccessList(list interface{}, pager *utils.Pager, msg string) *fiber.Ma
 		"data":  list,
 		"total": pager.Total,
 		"page":  pager.Page,
+		"pages": math.Ceil(float64(pager.Total) / float64(pager.Limit)),
 		"limit": pager.Limit,
 	}
 }

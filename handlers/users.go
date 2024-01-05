@@ -24,6 +24,40 @@ func Debug(ctx *fiber.Ctx) error {
 	}, ""))
 }
 
+func UserRegister(ctx *fiber.Ctx) error {
+	type RegisterRequest struct {
+		Nickname string `json:"nickname" form:"nickname"`
+		Email    string `json:"email" form:"email"`
+		Password string `json:"password" form:"password"`
+	}
+
+	var registerRequest RegisterRequest
+	if err := ctx.BodyParser(&registerRequest); err != nil {
+		return ctx.JSON(respError("参数错误", nil))
+	}
+	if len(registerRequest.Password) < 6 {
+		return ctx.JSON(respError("密码过于简单，请设置长度6位以上且包含特殊字符", nil))
+	}
+	if models.IncrementUserRegister() > 200 {
+		return ctx.JSON(respError("注册火爆，请稍后", nil))
+	}
+	if _, err := models.GetLoginUser(registerRequest.Email); err == nil {
+		return ctx.JSON(respError("用户已存在", nil))
+	}
+	var u = models.User{
+		Nickname:  registerRequest.Nickname,
+		Email:     registerRequest.Email,
+		Password:  utils.PasswordHash(registerRequest.Password),
+		ApiKey:    utils.HashString(fmt.Sprintf("%s%d", registerRequest.Password, time.Now().UnixNano())),
+		CreatedAt: time.Now(),
+	}
+	if err := models.DB().Create(&u).Error; err != nil {
+		return ctx.JSON(respErrorDebug("用户注册失败", err.Error()))
+	}
+
+	return ctx.JSON(respSuccess(nil, "注册成功"))
+}
+
 func UserLogin(ctx *fiber.Ctx) error {
 	type LoginRequest struct {
 		Username string `json:"username" form:"username"`
@@ -41,7 +75,11 @@ func UserLogin(ctx *fiber.Ctx) error {
 	if err != nil {
 		return ctx.JSON(respError("用户名或者密码错误", nil))
 	}
+	if models.GetLoginErrorCount(u.Id) > 10 {
+		return ctx.JSON(respError("登录异常，稍后再试", nil))
+	}
 	if u.Password != utils.PasswordHash(loginRequest.Password) {
+		models.IncrementLoginError(u.Id)
 		return ctx.JSON(respError("用户名或者密码错误", nil))
 	}
 	accessToken, err := utils.NewJwtAccessToken(u.Id, u.Nickname, host)
@@ -129,7 +167,7 @@ func UserTokenRefresh(ctx *fiber.Ctx) error {
 
 func CreateUserProxy(ctx *fiber.Ctx) error {
 	claims := (ctx.Locals("user").(*jwt.Token)).Claims.(jwt.MapClaims)
-	var userId = claims["id"].(uint64)
+	var userId = uint64(claims["id"].(float64))
 
 	type PostRequest struct {
 		Title     string `json:"title" form:"title"`
@@ -182,7 +220,7 @@ func CreateUserProxy(ctx *fiber.Ctx) error {
 func UpdateUserProxy(ctx *fiber.Ctx) error {
 	var id = ctx.Params("id")
 	claims := (ctx.Locals("user").(*jwt.Token)).Claims.(jwt.MapClaims)
-	var userId = claims["id"].(uint64)
+	var userId = uint64(claims["id"].(float64))
 
 	type PostRequest struct {
 		Title     string `json:"title" form:"title"`
@@ -220,7 +258,7 @@ func UpdateUserProxy(ctx *fiber.Ctx) error {
 func DeleteUserProxy(ctx *fiber.Ctx) error {
 	var id = ctx.Params("id")
 	claims := (ctx.Locals("user").(*jwt.Token)).Claims.(jwt.MapClaims)
-	var userId = claims["id"].(uint64)
+	var userId = uint64(claims["id"].(float64))
 
 	if err := models.DB().Where("id", id).Where("user_id", userId).Delete(&models.UserProxy{}).Error; err != nil {
 		return ctx.JSON(respErrorDebug("删除失败", err.Error()))
@@ -232,7 +270,7 @@ func DeleteUserProxy(ctx *fiber.Ctx) error {
 func ListUserProxy(ctx *fiber.Ctx) error {
 	var pager = utils.ParsePage(ctx)
 	claims := (ctx.Locals("user").(*jwt.Token)).Claims.(jwt.MapClaims)
-	var userId = claims["id"].(uint64)
+	var userId = uint64(claims["id"].(float64))
 
 	var ups []models.UserProxy
 	engine := models.DB().Model(&ups).Where("user_id", userId)
@@ -246,7 +284,7 @@ func ListUserProxyRequestLog(ctx *fiber.Ctx) error {
 	var proxyId = ctx.Params("proxy_id")
 	var pager = utils.ParsePage(ctx)
 	claims := (ctx.Locals("user").(*jwt.Token)).Claims.(jwt.MapClaims)
-	var userId = claims["id"].(uint64)
+	var userId = uint64(claims["id"].(float64))
 
 	type RespRequestLog struct {
 		Id        uint64    `json:"id"`

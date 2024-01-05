@@ -60,3 +60,31 @@ func SetLocalUserConfig(host string, x interface{}, d time.Duration) {
 	LocalCache.Set(fmt.Sprintf("%s-request", host), int64(0), d)
 	LocalCache.Set(fmt.Sprintf("%s-request-ok", host), int64(0), d)
 }
+
+func IncrementLoginError(userId uint64) int64 {
+	var u = fmt.Sprintf("login-error-%d", userId)
+	if _, ok := LocalCache.Get(u); !ok {
+		LocalCache.Set(u, int64(1), time.Hour)
+		return 1
+	} else {
+		n, _ := LocalCache.IncrementInt64(u, 1)
+		return n
+	}
+}
+
+func GetLoginErrorCount(userId uint64) int64 {
+	var u = fmt.Sprintf("login-error-%d", userId)
+	v, _ := LocalCache.Get(u)
+	return v.(int64)
+}
+
+func IncrementUserRegister() int64 {
+	var u = fmt.Sprintf("global-register-count")
+	if _, ok := LocalCache.Get(u); !ok {
+		LocalCache.Set(u, int64(1), time.Hour)
+		return 1
+	} else {
+		n, _ := LocalCache.IncrementInt64(u, 1)
+		return n
+	}
+}

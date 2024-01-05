@@ -79,7 +79,7 @@ func Image(ctx *fiber.Ctx) error {
 		ProxyId:   appConfig.ProxyId,
 		MetaId:    localMeta.Id,
 		OriginUrl: localMeta.Raw,
-		Referer:   ctx.Get("Referer") + ", " + imgConfig.HttpUA,
+		Referer:   utils.ToJsonString(map[string]string{"ua": imgConfig.HttpUA, "referer": ctx.Get("Referer")}, false),
 		Ip:        ctx.IP(),
 		IsCache:   1,
 		CreatedAt: now,

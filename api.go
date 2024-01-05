@@ -17,6 +17,7 @@ func main() {
 	app.Post("/shrink", handlers.Shrink)
 
 	app.Post("/user/login", handlers.UserLogin)
+	app.Post("/user/register", handlers.UserRegister)
 
 	// JWT Middleware
 	app.Use(jwtware.New(jwtware.Config{
