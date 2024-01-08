@@ -74,8 +74,10 @@ func IncrementLoginError(userId uint64) int64 {
 
 func GetLoginErrorCount(userId uint64) int64 {
 	var u = fmt.Sprintf("login-error-%d", userId)
-	v, _ := LocalCache.Get(u)
-	return v.(int64)
+	if v, ok := LocalCache.Get(u); ok {
+		return v.(int64)
+	}
+	return 0
 }
 
 func IncrementUserRegister() int64 {
