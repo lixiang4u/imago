@@ -15,9 +15,9 @@ func (User) TableName() string {
 	return "user"
 }
 
-func GetLoginUser(username string) (u User, err error) {
+func GetLoginUser(email string) (u User, err error) {
 	u = User{}
-	if err = DB().Model(&u).Where("email", username).Take(&u).Error; err != nil {
+	if err = DB().Model(&u).Where("email", email).Take(&u).Error; err != nil {
 		return
 	}
 	return

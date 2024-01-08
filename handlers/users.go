@@ -60,7 +60,7 @@ func UserRegister(ctx *fiber.Ctx) error {
 
 func UserLogin(ctx *fiber.Ctx) error {
 	type LoginRequest struct {
-		Username string `json:"username" form:"username"`
+		Email    string `json:"email" form:"email"`
 		Password string `json:"password" form:"password"`
 		Version  string `json:"version" json:"version"`
 	}
@@ -71,7 +71,7 @@ func UserLogin(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(&loginRequest); err != nil {
 		return ctx.JSON(respError("参数错误", nil))
 	}
-	u, err := models.GetLoginUser(loginRequest.Username)
+	u, err := models.GetLoginUser(loginRequest.Email)
 	if err != nil {
 		return ctx.JSON(respError("用户名或者密码错误", nil))
 	}
