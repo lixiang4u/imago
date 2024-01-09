@@ -195,7 +195,7 @@ func CreateUserProxy(ctx *fiber.Ctx) error {
 	if up.Id > 0 && up.UserId != userId {
 		return ctx.JSON(respError("代理主机已存在", nil))
 	}
-	if models.GetUserProxyCount(userId) > 10 {
+	if models.GetUserProxyCount(userId) >= 10 {
 		return ctx.JSON(respError("代理数量超过限制", nil))
 	}
 
@@ -253,7 +253,7 @@ func UpdateUserProxy(ctx *fiber.Ctx) error {
 		return ctx.JSON(respErrorDebug("修改失败", err.Error()))
 	}
 
-	return ctx.JSON(respSuccess(nil, "创建成功"))
+	return ctx.JSON(respSuccess(nil, "修改成功"))
 }
 
 func DeleteUserProxy(ctx *fiber.Ctx) error {
