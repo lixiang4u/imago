@@ -144,7 +144,7 @@ func UserTokenRefresh(ctx *fiber.Ctx) error {
 	if len(v.(string)) == 0 {
 		return ctx.JSON(respError("refresh_token异常", nil))
 	}
-	var id = claims["id"].(uint64)
+	var id = uint64(claims["id"].(float64))
 	var name = claims["name"].(string)
 	var iss = claims["iss"].(string)
 
@@ -177,6 +177,7 @@ func CreateUserProxy(ctx *fiber.Ctx) error {
 		UserAgent string `json:"user_agent" form:"user_agent"`
 		Cors      string `json:"cors" form:"cors"`
 		Referer   string `json:"referer" form:"referer"`
+		Status    int8   `json:"status" form:"status"`
 	}
 
 	var postRequest PostRequest
