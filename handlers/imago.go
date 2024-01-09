@@ -75,14 +75,16 @@ func Image(ctx *fiber.Ctx) error {
 	log.Println("[raw meta]", utils.ToJsonString(localMeta, false))
 
 	var requestLog = &models.RequestLog{
-		UserId:    appConfig.UserId,
-		ProxyId:   appConfig.ProxyId,
-		MetaId:    localMeta.Id,
-		OriginUrl: localMeta.Raw,
-		Referer:   utils.ToJsonString(map[string]string{"ua": imgConfig.HttpUA, "referer": ctx.Get("Referer")}, false),
-		Ip:        ctx.IP(),
-		IsCache:   1,
-		CreatedAt: now,
+		UserId:     appConfig.UserId,
+		ProxyId:    appConfig.ProxyId,
+		MetaId:     localMeta.Id,
+		RequestUrl: localMeta.RequestUri,
+		OriginUrl:  localMeta.Raw,
+		Referer:    ctx.Get("Referer"),
+		UA:         imgConfig.HttpUA,
+		Ip:         ctx.IP(),
+		IsCache:    1,
+		CreatedAt:  now,
 	}
 	if localMeta.FetchSource {
 		requestLog.IsCache = 0

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/lixiang4u/imago/models"
-	"log"
 	"time"
 )
 
@@ -16,7 +15,7 @@ func StringMd5(str string) string {
 }
 
 func PasswordHash(password string) string {
-	log.Println("[debug.password]", StringMd5(fmt.Sprintf("%s,%s", models.SECRET_KEY, password)))
+	//log.Println("[debug.password]", StringMd5(fmt.Sprintf("%s,%s", models.SECRET_KEY, password)))
 	return StringMd5(fmt.Sprintf("%s,%s", models.SECRET_KEY, password))
 }
 

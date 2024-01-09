@@ -42,13 +42,14 @@ func Shrink(ctx *fiber.Ctx) error {
 	}
 
 	var localMeta = models.LocalMeta{
-		Id:        utils.FormattedUUID(16),
-		FeatureId: "default",
-		Origin:    "",
-		Remote:    false,
-		Ext:       strings.ToLower(strings.Trim(path.Ext(fh.Filename), ".")),
-		Raw:       "",
-		Size:      fh.Size,
+		Id:         utils.FormattedUUID(16),
+		FeatureId:  "default",
+		Origin:     "",
+		Remote:     false,
+		Ext:        strings.ToLower(strings.Trim(path.Ext(fh.Filename), ".")),
+		Raw:        "",
+		RequestUri: string(ctx.Request().RequestURI()),
+		Size:       fh.Size,
 	}
 
 	localMeta.Raw = utils.GetUploadFilePath(localMeta.Id, localMeta.Origin, localMeta.Ext)
@@ -87,14 +88,16 @@ func Shrink(ctx *fiber.Ctx) error {
 	var convertedFile = fmt.Sprintf("%s.%s.%s", localMeta.Raw, localMeta.FeatureId, dstFormat)
 
 	var requestLog = &models.RequestLog{
-		UserId:    appConfig.UserId,
-		ProxyId:   appConfig.ProxyId,
-		MetaId:    localMeta.Id,
-		OriginUrl: localMeta.Raw,
-		Referer:   utils.ToJsonString(map[string]string{"ua": imgConfig.HttpUA, "referer": ctx.Get("Referer")}, false),
-		Ip:        ctx.IP(),
-		IsCache:   0,
-		CreatedAt: time.Now(),
+		UserId:     appConfig.UserId,
+		ProxyId:    appConfig.ProxyId,
+		MetaId:     localMeta.Id,
+		RequestUrl: localMeta.RequestUri,
+		OriginUrl:  localMeta.Raw,
+		Referer:    ctx.Get("Referer"),
+		UA:         imgConfig.HttpUA,
+		Ip:         ctx.IP(),
+		IsCache:    0,
+		CreatedAt:  time.Now(),
 	}
 
 	if utils.FileExists(convertedFile) {

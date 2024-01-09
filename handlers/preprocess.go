@@ -107,6 +107,7 @@ func HandleLocalMeta(pathOrUri string, imgConfig *models.ImageConfig, appConfig 
 		Ext:         "",
 		RemoteLocal: "",
 		Raw:         "",
+		RequestUri:  pathOrUri,
 		RawVersion:  "",
 		Size:        0,
 	}

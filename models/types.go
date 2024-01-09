@@ -76,6 +76,7 @@ type LocalMeta struct {
 	RemoteLocal string //远程源文件在本地地址
 	Raw         string // 源文件的位置（本地或者远程URL）
 	RawVersion  string
+	RequestUri  string
 	Size        int64
 	FetchSource bool
 }
