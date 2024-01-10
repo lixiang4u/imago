@@ -40,6 +40,7 @@ func main() {
 	app.Delete("/user/proxy/:id", handlers.DeleteUserProxy)
 	app.Get("/user/proxies", handlers.ListUserProxy)
 	app.Get("/user/proxy/:proxy_id/logs", handlers.ListUserProxyRequestLog)
+	app.Get("/user/proxy/stat", handlers.ListUserProxyStat)
 
 	log.Fatal(app.Listen(":8060"))
 }
