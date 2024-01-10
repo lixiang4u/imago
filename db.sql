@@ -73,11 +73,25 @@ CREATE TABLE `request_stat`
     `meta_id`       varchar(32)  NOT NULL DEFAULT '' COMMENT '请求路径hash',
     `origin_url`    varchar(255) NOT NULL DEFAULT '' COMMENT '原图url路径（空表示所有路径）',
     `request_count` bigint unsigned NOT NULL DEFAULT 0 COMMENT '请求次数',
-    `response_byte` bigint unsigned NOT NULL DEFAULT 0 COMMENT '相应数据大小',
+    `response_byte` bigint unsigned NOT NULL DEFAULT 0 COMMENT '响应数据大小',
     `saved_byte`    bigint unsigned NOT NULL DEFAULT 0 COMMENT '减少消耗流量大小',
     `created_at`    datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     PRIMARY KEY (`id`) USING BTREE,
     KEY             `user_id_proxy_id_meta_id` (`user_id`,`proxy_id`,`meta_id`)
+) ENGINE=InnoDB  COMMENT='请求统计';
+
+
+CREATE TABLE `request_stat_request_chart`
+(
+    `id`            int unsigned NOT NULL AUTO_INCREMENT,
+    `user_id`       int unsigned NOT NULL DEFAULT 0 COMMENT '用户ID',
+    `proxy_id`      int unsigned NOT NULL DEFAULT 0 COMMENT '代理ID',
+    `request_count` bigint unsigned NOT NULL DEFAULT 0 COMMENT '请求次数',
+    `response_byte` bigint unsigned NOT NULL DEFAULT 0 COMMENT '响应数据大小',
+    `saved_byte`    bigint unsigned NOT NULL DEFAULT 0 COMMENT '减少消耗流量大小',
+    `created_at`    datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间，精度到分钟',
+    PRIMARY KEY (`id`) USING BTREE,
+    KEY             `user_id_proxy_id_created_at` (`user_id`,`proxy_id`,`created_at`)
 ) ENGINE=InnoDB  COMMENT='请求统计';
 
 
