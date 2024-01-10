@@ -337,3 +337,74 @@ func ListUserProxyStat(ctx *fiber.Ctx) error {
 
 	return ctx.JSON(respSuccess(respStat, "ok"))
 }
+
+func ListUserProxyProxyRequestStat(ctx *fiber.Ctx) error {
+	var proxyId = utils.StringToUint64(ctx.Params("proxy_id"))
+
+	claims := (ctx.Locals("user").(*jwt.Token)).Claims.(jwt.MapClaims)
+	var userId = uint64(claims["id"].(float64))
+
+	// 近24小时数据
+
+	var logs []models.RequestStatRequestChart
+	engine := models.DB().Model(&logs).Where("user_id", userId)
+	if proxyId > 0 {
+		engine.Where("proxy_id", proxyId)
+	}
+	// 时间筛选器
+	engine.Order("created_at ASC").Find(&logs)
+
+	// 60 *24
+	var start = logs[0].CreatedAt.Truncate(time.Minute).Unix()
+	var end = logs[len(logs)-1].CreatedAt.Unix()
+	if end-start > 86400 {
+		end = start + 86400
+	}
+
+	var logMap = make(map[int64]models.RequestStatRequestChart)
+	for _, log := range logs {
+		v, ok := logMap[log.CreatedAt.Unix()]
+		if !ok {
+			logMap[log.CreatedAt.Unix()] = log
+		} else {
+			v.RequestCount += log.RequestCount
+			v.ResponseByte += log.ResponseByte
+			v.SavedByte += log.SavedByte
+			logMap[log.CreatedAt.Unix()] = v
+		}
+	}
+
+	type RespLog struct {
+		T        string `json:"t"`
+		Count    uint64 `json:"count"`
+		RespByte uint64 `json:"resp_byte"`
+		SaveByte uint64 `json:"save_byte"`
+	}
+	var respLogs []RespLog
+
+	for {
+		if start > end {
+			break
+		}
+		t := time.Unix(start, 0)
+		v, ok := logMap[start]
+		if !ok {
+			respLogs = append(respLogs, RespLog{
+				T:        t.Format("04:05"),
+				Count:    0,
+				RespByte: 0,
+				SaveByte: 0,
+			})
+		} else {
+			respLogs = append(respLogs, RespLog{
+				T:        t.Format("04:05"),
+				Count:    v.RequestCount,
+				RespByte: v.RequestCount,
+				SaveByte: v.SavedByte,
+			})
+		}
+		start += 60
+	}
+
+	return ctx.JSON(respSuccess(respLogs, "ok"))
+}

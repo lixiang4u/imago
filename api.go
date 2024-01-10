@@ -41,6 +41,7 @@ func main() {
 	app.Get("/user/proxies", handlers.ListUserProxy)
 	app.Get("/user/proxy/:proxy_id/logs", handlers.ListUserProxyRequestLog)
 	app.Get("/user/proxy/stat", handlers.ListUserProxyStat)
+	app.Get("/proxy/:proxy_id/request/stat", handlers.ListUserProxyProxyRequestStat)
 
 	log.Fatal(app.Listen(":8060"))
 }
