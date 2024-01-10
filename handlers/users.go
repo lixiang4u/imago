@@ -390,14 +390,14 @@ func ListUserProxyProxyRequestStat(ctx *fiber.Ctx) error {
 		v, ok := logMap[start]
 		if !ok {
 			respLogs = append(respLogs, RespLog{
-				T:        t.Format("04:05"),
+				T:        t.Format("15:04"),
 				Count:    0,
 				RespByte: 0,
 				SaveByte: 0,
 			})
 		} else {
 			respLogs = append(respLogs, RespLog{
-				T:        t.Format("04:05"),
+				T:        t.Format("15:04"),
 				Count:    v.RequestCount,
 				RespByte: v.RequestCount,
 				SaveByte: v.SavedByte,
