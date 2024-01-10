@@ -100,6 +100,15 @@ func UserLogin(ctx *fiber.Ctx) error {
 	}, "登录成功"))
 }
 
+func UserTokenCheck(ctx *fiber.Ctx) error {
+	user := ctx.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	return ctx.JSON(respSuccess(fiber.Map{
+		"nickname":  claims["name"].(string),
+		"timestamp": time.Now().Unix(),
+	}, "ok"))
+}
+
 func UserInfo(ctx *fiber.Ctx) error {
 	user := ctx.Locals("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)

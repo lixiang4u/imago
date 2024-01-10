@@ -3,6 +3,7 @@ package main
 import (
 	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/lixiang4u/imago/handlers"
 	"github.com/lixiang4u/imago/models"
 	"log"
@@ -10,6 +11,12 @@ import (
 
 func main() {
 	app := fiber.New()
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "*",
+		AllowHeaders: "*",
+		AllowMethods: "*",
+	}))
+
 	app.Static("/upload", models.UploadRoot)
 	app.Get("/", handlers.Index)
 	app.Get("/debug", handlers.Debug)
@@ -24,6 +31,7 @@ func main() {
 		SigningKey: jwtware.SigningKey{Key: []byte(models.SECRET_KEY)},
 	}))
 
+	app.Get("/user/status", handlers.UserTokenCheck)
 	app.Get("/user/info", handlers.UserInfo)
 	app.Get("/user/refresh-token", handlers.UserTokenRefresh)
 
