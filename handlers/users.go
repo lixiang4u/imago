@@ -297,14 +297,15 @@ func ListUserProxyRequestLog(ctx *fiber.Ctx) error {
 	var userId = uint64(claims["id"].(float64))
 
 	type RespRequestLog struct {
-		Id        uint64    `json:"id"`
-		MetaId    string    `json:"meta_id"`
-		OriginUrl string    `json:"origin_url"`
-		Referer   string    `json:"referer"`
-		Ip        string    `json:"ip"`
-		IsCache   int8      `json:"is_cache"`
-		IsExist   int8      `json:"is_exist"`
-		CreatedAt time.Time `json:"created_at"`
+		Id         uint64    `json:"id"`
+		MetaId     string    `json:"meta_id"`
+		RequestUrl string    `json:"request_url"`
+		OriginUrl  string    `json:"origin_url"`
+		Referer    string    `json:"referer"`
+		Ip         string    `json:"ip"`
+		IsCache    int8      `json:"is_cache"`
+		IsExist    int8      `json:"is_exist"`
+		CreatedAt  time.Time `json:"created_at"`
 	}
 
 	var logs []RespRequestLog
