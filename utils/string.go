@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/lixiang4u/imago/models"
+	"strconv"
 	"time"
 )
 
@@ -42,4 +43,9 @@ func NewJwtRefreshToken(id uint64, username, iss string) (string, error) {
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(models.SECRET_KEY))
+}
+
+func StringToUint64(s string) (i uint64) {
+	i, _ = strconv.ParseUint(s, 10, 64)
+	return
 }
