@@ -326,7 +326,11 @@ func ListUserProxyStat(ctx *fiber.Ctx) error {
 		SavedBytes    int64 `json:"saved_bytes"`
 	}
 	var respStat RespStat
-	models.DB().Model(&models.RequestStat{}).Select("SUM(request_count)", "SUM(response_byte)", "SUM(saved_byte)").Where("user_id", userId).Take(&respStat)
+	models.DB().Model(&models.RequestStat{}).Select(
+		"SUM(request_count) AS request_count",
+		"SUM(response_byte) AS response_bytes",
+		"SUM(saved_byte) AS saved_bytes",
+	).Where("user_id", userId).Take(&respStat)
 
 	models.DB().Model(&models.UserProxy{}).Where("user_id", userId).Count(&respStat.ProxyCount)
 
