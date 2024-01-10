@@ -225,7 +225,7 @@ func (x *NsqRequestStatRequestChartHandler) HandleMessage(message *nsq.Message) 
 		RequestCount: tmpRequestStat.RequestCount,
 		ResponseByte: tmpRequestStat.ResponseByte,
 		SavedByte:    tmpRequestStat.SavedByte,
-		CreatedAt:    tmpRequestStat.CreatedAt.Truncate(time.Duration(tmpRequestStat.CreatedAt.Second())), // 重新计算时间
+		CreatedAt:    tmpRequestStat.CreatedAt.Truncate(time.Minute), // 重新计算时间
 	}
 
 	var id uint64
