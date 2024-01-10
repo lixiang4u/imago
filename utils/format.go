@@ -70,3 +70,8 @@ func FormattedUUID(length int) string {
 	var s = strings.ReplaceAll(UUIDv4(), "-", "")
 	return strings.ToLower(s[:length])
 }
+
+func FormatNickname(email string) string {
+	var tmpList = strings.Split(email, "@")
+	return tmpList[0]
+}

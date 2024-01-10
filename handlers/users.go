@@ -45,7 +45,7 @@ func UserRegister(ctx *fiber.Ctx) error {
 		return ctx.JSON(respError("用户已存在", nil))
 	}
 	var u = models.User{
-		Nickname:  registerRequest.Nickname,
+		Nickname:  utils.FormatNickname(registerRequest.Email),
 		Email:     registerRequest.Email,
 		Password:  utils.PasswordHash(registerRequest.Password),
 		ApiKey:    utils.HashString(fmt.Sprintf("%s%d", registerRequest.Password, time.Now().UnixNano())),
