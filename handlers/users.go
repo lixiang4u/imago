@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
+	utils2 "github.com/gofiber/fiber/v2/utils"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/lixiang4u/imago/models"
 	"github.com/lixiang4u/imago/utils"
@@ -338,21 +339,56 @@ func ListUserProxyStat(ctx *fiber.Ctx) error {
 	return ctx.JSON(respSuccess(respStat, "ok"))
 }
 
+func testCreateLog(userId uint64, proxyId uint64) {
+	var start = time.Now().Truncate(time.Minute).Unix()
+	var end = time.Now().Add(time.Hour * 24).Truncate(time.Minute).Unix()
+	var log models.RequestStatRequestChart
+	var t time.Time
+	for {
+		if start > end {
+			break
+		}
+
+		t = time.Unix(start, 0)
+		if e := models.DB().Model(&log).Where("user_id", userId).Where("proxy_id", proxyId).Where("created_at", time.Unix(start, 0)).Take(&log); e != nil {
+			// 五
+			models.DB().Create(&models.RequestStatRequestChart{
+				UserId:       userId,
+				ProxyId:      proxyId,
+				RequestCount: uint64(rand.Intn(9999)),
+				ResponseByte: uint64(rand.Intn(999999)),
+				SavedByte:    uint64(rand.Intn(999999)),
+				CreatedAt:    t,
+			})
+		} else {
+
+		}
+
+		start += 60
+	}
+
+}
+
 func ListUserProxyProxyRequestStat(ctx *fiber.Ctx) error {
 	var proxyId = utils.StringToUint64(ctx.Params("proxy_id"))
-
 	claims := (ctx.Locals("user").(*jwt.Token)).Claims.(jwt.MapClaims)
 	var userId = uint64(claims["id"].(float64))
-
-	// 近24小时数据
+	date, dateErr := time.Parse("2006-01-02", ctx.Query("date"))
 
 	var logs []models.RequestStatRequestChart
 	engine := models.DB().Model(&logs).Where("user_id", userId)
 	if proxyId > 0 {
 		engine.Where("proxy_id", proxyId)
 	}
-	// 时间筛选器
-	engine.Order("created_at ASC").Find(&logs)
+	if dateErr == nil {
+		engine.Where("created_at >= ?", utils2.ToString(date))
+		engine.Where("created_at < ?", utils2.ToString(date.AddDate(0, 0, 1)))
+	}
+	engine.Order("created_at ASC").Limit(5000).Find(&logs)
+
+	if len(logs) == 0 {
+		return ctx.JSON(respSuccess(nil, "没有数据"))
+	}
 
 	// 60 *24
 	var start = logs[0].CreatedAt.Truncate(time.Minute).Unix()

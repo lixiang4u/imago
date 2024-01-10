@@ -3,6 +3,7 @@ package models
 import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"log"
 	"os"
 )
@@ -15,7 +16,9 @@ func init() {
 
 func initDB() *gorm.DB {
 	// 参考 https://github.com/go-sql-driver/mysql#dsn-data-source-name 获取详情
-	db, err := gorm.Open(mysql.Open(LocalConfig.MySQL.Dsn), &gorm.Config{})
+	db, err := gorm.Open(mysql.Open(LocalConfig.MySQL.Dsn), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Info),
+	})
 	if err != nil {
 		log.Println("[gorm.Open.Error]", err.Error())
 		os.Exit(-1)
