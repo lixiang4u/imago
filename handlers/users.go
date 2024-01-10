@@ -320,10 +320,10 @@ func ListUserProxyStat(ctx *fiber.Ctx) error {
 	var userId = uint64(claims["id"].(float64))
 
 	type RespStat struct {
-		ProxyCount   int64 `json:"proxy_count"`
-		RequestCount int64 `json:"request_count"`
-		ResponseByte int64 `json:"response_byte"`
-		SavedBytes   int64 `json:"saved_byte"`
+		ProxyCount    int64 `json:"proxy_count"`
+		RequestCount  int64 `json:"request_count"`
+		ResponseBytes int64 `json:"response_bytes"`
+		SavedBytes    int64 `json:"saved_bytes"`
 	}
 	var respStat RespStat
 	models.DB().Model(&models.RequestStat{}).Select("SUM(request_count)", "SUM(response_byte)", "SUM(saved_byte)").Where("userId", userId).Take(&respStat)
