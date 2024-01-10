@@ -5,7 +5,7 @@ go 1.21.3
 require (
 	github.com/cespare/xxhash/v2 v2.2.0
 	github.com/davidbyttow/govips/v2 v2.13.0
-	github.com/gofiber/fiber/v2 v2.51.0
+	github.com/gofiber/fiber/v2 v2.52.0
 	github.com/h2non/filetype v1.1.3
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 )

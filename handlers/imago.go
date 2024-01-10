@@ -94,14 +94,12 @@ func Image(ctx *fiber.Ctx) error {
 
 	// 源文件不存在
 	if !utils.FileExists(localMeta.RemoteLocal) {
-		go func() { _ = prepareRequestLog(requestLog, 0, 0) }()
+		go func() { _ = prepareRequestLog(requestLog, 0) }()
 		//utils.RemoveMeta(localMeta.Id, localMeta.Origin)
 		_ = ctx.Send([]byte("raw file not found"))
 		_ = ctx.SendStatus(404)
 		return nil
 	}
-
-	go func() { _ = prepareRequestLog(requestLog, 0, 1) }()
 
 	convertedFile, convertedSize, ok := ConvertAndGetSmallestImage(localMeta, supported, &imgConfig, &exportConfig)
 	if !ok {
@@ -109,6 +107,8 @@ func Image(ctx *fiber.Ctx) error {
 		_ = ctx.SendStatus(404)
 		return nil
 	}
+
+	go func() { _ = prepareRequestLog(requestLog, 1) }()
 
 	var mime = utils.GetFileMIME(convertedFile)
 
@@ -255,8 +255,7 @@ func ConvertImage(
 	return converted, utils.FileSize(convertedFile), nil
 }
 
-func prepareRequestLog(requestLog *models.RequestLog, isCache, isExist int8) error {
-	requestLog.IsCache = isCache
+func prepareRequestLog(requestLog *models.RequestLog, isExist int8) error {
 	requestLog.IsExist = isExist
 	buf, err := json.Marshal(requestLog)
 	if err != nil {

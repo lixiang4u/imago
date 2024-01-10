@@ -142,8 +142,7 @@ func Shrink(ctx *fiber.Ctx) error {
 func prepareShrinkLog(convertedFile string, convertedSize int64, isExist int8, requestLog *models.RequestLog, localMeta *models.LocalMeta, appConfig *models.AppConfig) {
 	var now = time.Now()
 
-	requestLog.IsExist = isExist
-	_ = prepareRequestLog(requestLog, 0, 1)
+	_ = prepareRequestLog(requestLog, isExist)
 
 	_ = prepareRequestStat(&models.RequestStat{
 		UserId:       appConfig.UserId,
