@@ -18,7 +18,7 @@ func (RequestStatRequestChart) TableName() string {
 
 func GetOrCreateRequestStatRequestChart(stat RequestStatRequestChart) (RequestStatRequestChart, error) {
 	var findRequestStatRequestChart RequestStatRequestChart
-	if err := DB().Model(&findRequestStatRequestChart).Where("user_id", stat.UserId).Where("proxy_id", stat.ProxyId).Take(&findRequestStatRequestChart).Error; err == nil {
+	if err := DB().Model(&findRequestStatRequestChart).Where("user_id", stat.UserId).Where("proxy_id", stat.ProxyId).Where("created_at", stat.CreatedAt).Take(&findRequestStatRequestChart).Error; err == nil {
 		return findRequestStatRequestChart, nil
 	}
 	if err := DB().Create(&stat).Error; err != nil {
