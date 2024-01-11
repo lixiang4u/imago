@@ -374,16 +374,17 @@ func ListUserProxyProxyRequestStat(ctx *fiber.Ctx) error {
 	claims := (ctx.Locals("user").(*jwt.Token)).Claims.(jwt.MapClaims)
 	var userId = uint64(claims["id"].(float64))
 	date, dateErr := time.Parse("2006-01-02", ctx.Query("date"))
+	if dateErr != nil {
+		date = time.Now().Add(-time.Hour * 12)
+	}
 
 	var logs []models.RequestStatRequestChart
 	engine := models.DB().Model(&logs).Where("user_id", userId)
 	if proxyId > 0 {
 		engine.Where("proxy_id", proxyId)
 	}
-	if dateErr == nil {
-		engine.Where("created_at >= ?", utils2.ToString(date))
-		engine.Where("created_at < ?", utils2.ToString(date.AddDate(0, 0, 1)))
-	}
+	engine.Where("created_at >= ?", utils2.ToString(date))
+	engine.Where("created_at < ?", utils2.ToString(date.AddDate(0, 0, 1)))
 	engine.Order("created_at ASC").Limit(5000).Find(&logs)
 
 	if len(logs) == 0 {
