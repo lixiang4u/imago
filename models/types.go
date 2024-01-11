@@ -97,3 +97,8 @@ type LocalAppConfig struct {
 		Supported map[string]bool
 	} `json:"l"`
 }
+
+type CacheMapValue struct {
+	Id        uint64
+	Timestamp int64
+}
