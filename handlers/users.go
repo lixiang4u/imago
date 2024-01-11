@@ -117,18 +117,18 @@ func UserInfo(ctx *fiber.Ctx) error {
 	return ctx.SendString("Welcome " + name)
 }
 
-func checkOrigin(origin string) error {
+func parseOrigin(origin string) (o string, err error) {
 	u, err := url.Parse(origin)
 	if err != nil {
-		return err
+		return origin, err
 	}
 	if len(u.Scheme) == 0 || len(u.Host) == 0 {
-		return errors.New("源站地址格式错误")
+		return origin, errors.New("源站地址格式错误")
 	}
 	if len(u.Path) > 0 || len(u.Query()) > 0 {
-		return errors.New("源站地址格式错误")
+		return origin, errors.New("源站地址格式错误")
 	}
-	return nil
+	return fmt.Sprintf("%s://%s", u.Scheme, u.Host), nil
 }
 
 func parseOrNewHost(ctx *fiber.Ctx) string {
@@ -190,11 +190,12 @@ func CreateUserProxy(ctx *fiber.Ctx) error {
 		Status    int8   `json:"status" form:"status"`
 	}
 
+	var err error
 	var postRequest PostRequest
 	if err := ctx.BodyParser(&postRequest); err != nil {
 		return ctx.JSON(respError("参数错误", nil))
 	}
-	if err := checkOrigin(postRequest.Origin); err != nil {
+	if postRequest.Origin, err = parseOrigin(postRequest.Origin); err != nil {
 		return ctx.JSON(respError(err.Error(), nil))
 	}
 	postRequest.Host = parseOrNewHost(ctx)
@@ -243,11 +244,12 @@ func UpdateUserProxy(ctx *fiber.Ctx) error {
 		Status    int8   `json:"status" form:"status"`
 	}
 
+	var err error
 	var postRequest PostRequest
 	if err := ctx.BodyParser(&postRequest); err != nil {
 		return ctx.JSON(respError("参数错误", nil))
 	}
-	if err := checkOrigin(postRequest.Origin); err != nil {
+	if postRequest.Origin, err = parseOrigin(postRequest.Origin); err != nil {
 		return ctx.JSON(respError(err.Error(), nil))
 	}
 
