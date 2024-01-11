@@ -125,9 +125,6 @@ func parseOrigin(origin string) (o string, err error) {
 	if len(u.Scheme) == 0 || len(u.Host) == 0 {
 		return origin, errors.New("源站地址格式错误")
 	}
-	if len(u.Path) > 0 || len(u.Query()) > 0 {
-		return origin, errors.New("源站地址格式错误")
-	}
 	return fmt.Sprintf("%s://%s", u.Scheme, u.Host), nil
 }
 
