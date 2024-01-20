@@ -161,7 +161,7 @@ func parseFileFetchCh(ch chan bool, prefetchUrl string, supported map[string]boo
 
 		log.Println("[fetch source]", localMeta.Raw, "=>", localMeta.RemoteLocal)
 
-		if err = downloadFile(localMeta.Raw, localMeta.RemoteLocal); err != nil {
+		if err = downloadFile(localMeta.Raw, localMeta.RemoteLocal, appConfig); err != nil {
 			log.Println("[prefetch error]", localMeta.Raw, err.Error())
 			return err
 		}
