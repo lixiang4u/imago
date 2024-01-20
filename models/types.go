@@ -8,6 +8,8 @@ type AppConfig struct {
 	ProxyHost  string //代理域名（用户请求代理域名，最终源文件在OriginSite）
 	Refresh    int    //是否回源，1.是，0.否
 	Debug      bool   //是否调试模式
+	UserAgent  string //溯源用的User-Agent
+	Cors       string //跨域设置
 }
 
 type ExportConfig struct {
@@ -69,16 +71,16 @@ type FileMeta struct {
 
 type LocalMeta struct {
 	Id          string
-	FeatureId   string
-	Origin      string
+	FeatureId   string // 功能参数后的编码id
+	Origin      string // 源主机（不带协议）
 	Remote      bool   // 源文件是否远程路径
 	Ext         string // 源文件后缀
-	RemoteLocal string //远程源文件在本地地址
+	RemoteLocal string // 远程源文件在本地地址
 	Raw         string // 源文件的位置（本地或者远程URL）
 	RawVersion  string
-	RequestUri  string
-	Size        int64
-	FetchSource bool
+	RequestUri  string // 请求的路径（带参数）
+	Size        int64  // 原始文件大小
+	FetchSource bool   // 是否溯源
 }
 
 type LocalAppConfig struct {

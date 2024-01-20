@@ -1,6 +1,8 @@
 package utils
 
-import "net/url"
+import (
+	"net/url"
+)
 
 func ParseUrlHost(tmpUrl string) string {
 	u, err := url.Parse(tmpUrl)
@@ -8,4 +10,12 @@ func ParseUrlHost(tmpUrl string) string {
 		return ""
 	}
 	return u.Host
+}
+
+func ParseUrlDefaultHost(tmpUrl, defaultHost string) string {
+	var p = ParseUrlHost(tmpUrl)
+	if len(p) == 0 {
+		return defaultHost
+	}
+	return p
 }

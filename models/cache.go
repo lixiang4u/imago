@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/patrickmn/go-cache"
+	"strings"
 	"time"
 )
 
@@ -30,13 +31,19 @@ func GetHostUserConfig(host string) (AppConfig, error) {
 			v = defaultAppConfig
 			d = time.Duration(time.Minute) * 10
 		} else {
+			if len(up.UserAgent) == 0 {
+				up.UserAgent = UserAgent
+			}
 			v = AppConfig{
 				UserId:     up.UserId,
 				ProxyId:    up.Id,
-				OriginSite: up.Origin, //https://abc.imago-service.xyz
+				OriginSite: strings.TrimSpace(up.Origin), //https://abc.imago-service.xyz
+				UserAgent:  strings.TrimSpace(up.UserAgent),
+				Cors:       strings.TrimSpace(up.Cors),
+				ProxyHost:  strings.TrimSpace(up.Host), //abc.imago-service.xyz
 				LocalPath:  "",
-				ProxyHost:  up.Host, //abc.imago-service.xyz
 				Refresh:    0,
+				Debug:      true,
 			}
 		}
 		SetLocalUserConfig(host, v, d)

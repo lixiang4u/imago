@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -95,6 +96,9 @@ func FileExists(fileName string) bool {
 }
 
 func RemoveCache(p string) {
+	if len(strings.Trim(strings.TrimSpace(p), "/")) == 0 {
+		return
+	}
 	files, err := filepath.Glob(p + "*")
 	if err != nil {
 		log.Println("[remove cache]", p, err.Error())

@@ -71,8 +71,10 @@ func Image(ctx *fiber.Ctx) error {
 		Lossless:      false,
 	}
 
-	log.Println("[appConfig]", utils.ToJsonString(appConfig, false))
-	log.Println("[raw meta]", utils.ToJsonString(localMeta, false))
+	if appConfig.Debug {
+		log.Println("[appConfig]", utils.ToJsonString(appConfig, false))
+		log.Println("[localMeta]", utils.ToJsonString(localMeta, false))
+	}
 
 	var requestLog = &models.RequestLog{
 		UserId:     appConfig.UserId,
@@ -115,6 +117,9 @@ func Image(ctx *fiber.Ctx) error {
 	reqOkCount, _ := models.IncrementRequestOkCount(appConfig.ProxyHost)
 
 	ctx.Set("Content-Type", mime.Value)
+	if len(appConfig.Cors) > 0 {
+		ctx.Set("Access-Control-Allow-Origin", appConfig.Cors)
+	}
 	ctx.Set("X-Compression-Rate", utils.CompressRate(localMeta.Size, convertedSize))
 	ctx.Set("X-Server", "imago")
 	if appConfig.Debug {

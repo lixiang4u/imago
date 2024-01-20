@@ -17,13 +17,13 @@ import (
 	"strings"
 )
 
-func downloadFile(remotePath, localPath string) error {
+func downloadFile(remotePath, localPath string, appConfig *models.AppConfig) error {
 	req, err := http.NewRequest("GET", remotePath, nil)
 	if err != nil {
 		log.Println("[download error0]", remotePath, err.Error())
 		return err
 	}
-	req.Header.Set("User-Agent", models.UserAgent)
+	req.Header.Set("User-Agent", appConfig.UserAgent)
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -38,7 +38,10 @@ func downloadFile(remotePath, localPath string) error {
 		log.Println("[download error2]", remotePath, resp.StatusCode)
 		return errors.New(fmt.Sprintf("fetch source status: %d", resp.StatusCode))
 	}
-
+	if resp.ContentLength > int64(models.MaxUpload) {
+		log.Println("[download error5]", remotePath, resp.ContentLength)
+		return errors.New(fmt.Sprintf("source too big: %d", resp.ContentLength))
+	}
 	// 下载文件
 	if err = os.MkdirAll(path.Dir(localPath), 0666); err != nil {
 		log.Println("[download error3]", path.Dir(localPath), err.Error())
@@ -98,54 +101,49 @@ func CheckSupported(httpAccept, httpUA string) map[string]bool {
 }
 
 func HandleLocalMeta(pathOrUri string, imgConfig *models.ImageConfig, appConfig *models.AppConfig) (models.LocalMeta, error) {
-	var rawFileClean = ""
+	var rawFileClean = "" // 不带参数的路径
 	var localMeta = models.LocalMeta{
-		Id:          "",
-		FeatureId:   "default",
-		Origin:      models.Local,
-		Remote:      false,
-		Ext:         "",
-		RemoteLocal: "",
-		Raw:         "",
-		RequestUri:  pathOrUri,
-		RawVersion:  "",
-		Size:        0,
+		Id:         "",
+		FeatureId:  "default",
+		RequestUri: pathOrUri,
+		Ext:        "raw",
+		RawVersion: "",
+		Size:       0,
+		//Origin:      "",
+		//Remote:      false,
+		//RemoteLocal: "",
+		//Raw:         "",
 	}
 
-	pathUri, fileExt, ok := CheckFileAllowed(pathOrUri)
-	if !ok {
-		return localMeta, errors.New("file type not support")
-	}
-
-	localMeta.Ext = fileExt
-
-	if len(appConfig.OriginSite) != 0 {
-		localMeta.Remote = true
-		tmpUrl, err := url.Parse(appConfig.OriginSite)
-		if err != nil {
-			tmpUrl.Host = models.Local
-		}
-		localMeta.Origin = tmpUrl.Host
-
-		localMeta.Raw = fmt.Sprintf("%s/%s", strings.TrimRight(appConfig.OriginSite, "/"), strings.TrimLeft(pathOrUri, "/"))
-		if appConfig.Refresh == 1 {
-			localMeta.RawVersion = utils.GetResourceVersion(localMeta.Raw, nil)
-		}
-	} else {
-		localMeta.Raw = path.Join(appConfig.LocalPath, pathUri) // 不能使用带参数的uri路径
-	}
-
-	tmpUrl, err := url.Parse(localMeta.Raw)
+	tmpUrl, err := url.Parse(pathOrUri)
 	if err != nil {
 		rawFileClean = pathOrUri
 	} else {
 		rawFileClean = tmpUrl.Path
 	}
 
+	if len(appConfig.OriginSite) != 0 {
+		localMeta.Remote = true
+		localMeta.Origin = utils.ParseUrlDefaultHost(appConfig.OriginSite, models.Local)
+		localMeta.Raw = fmt.Sprintf("%s/%s", strings.TrimRight(appConfig.OriginSite, "/"), strings.TrimLeft(pathOrUri, "/"))
+	} else {
+		// 不能使用带参数的uri路径
+		localMeta.Remote = false
+		localMeta.Origin = models.Local
+		localMeta.Raw = fmt.Sprintf("%s/%s", strings.TrimRight(appConfig.LocalPath, "/"), strings.TrimLeft(rawFileClean, "/"))
+	}
+
+	// 请求路径能解析出文件后缀
+	var ext = strings.ToLower(strings.TrimPrefix(path.Ext(rawFileClean), "."))
+	if slices.Contains(models.ImageTypes, ext) {
+		localMeta.Ext = ext
+	}
+
 	localMeta.Id = utils.HashString(fmt.Sprintf("%s,%s", appConfig.OriginSite, rawFileClean))
 	if !utils.IsDefaultObj(*imgConfig, []string{"HttpAccept", "HttpUA", "Src"}) {
 		localMeta.FeatureId = utils.HashString(fmt.Sprintf("%v", imgConfig))[:6]
 	}
+
 	if localMeta.Remote {
 		localMeta.RemoteLocal = utils.GetRemoteLocalFilePath(localMeta.Id, localMeta.Origin, localMeta.Ext)
 	} else {
@@ -166,20 +164,20 @@ func HandleToLocalPath(ctx *fiber.Ctx, imgConfig *models.ImageConfig, appConfig 
 		return localMeta, err
 	}
 
+	localMeta.Size = utils.FileSize(localMeta.RemoteLocal)
+
+	// 本地文件
 	if !localMeta.Remote {
-		localMeta.Size = utils.FileSize(localMeta.Raw)
 		return localMeta, nil
 	}
 
 	var rawExists = utils.FileExists(localMeta.RemoteLocal)
 	// 如果不需要refresh且文件存在，直接返回
 	if rawExists && appConfig.Refresh == 0 {
-		localMeta.Size = utils.FileSize(localMeta.RemoteLocal)
 		return localMeta, nil
 	}
 	// 如果需要refresh且版本未变化，直接返回
 	if rawExists && appConfig.Refresh != 0 && meta.Version == localMeta.RawVersion {
-		localMeta.Size = utils.FileSize(localMeta.RemoteLocal)
 		return localMeta, nil
 	}
 
@@ -188,9 +186,9 @@ func HandleToLocalPath(ctx *fiber.Ctx, imgConfig *models.ImageConfig, appConfig 
 	utils.RemoveMeta(localMeta.Id, localMeta.Origin)
 	utils.LogMeta(localMeta.Id, localMeta.Origin, localMeta.Raw, localMeta.RawVersion)
 
-	log.Println("[fetch source]", localMeta.Raw, "=>", localMeta.RemoteLocal)
+	log.Println("[fetchSource]", localMeta.Raw, "=>", localMeta.RemoteLocal)
 
-	if err = downloadFile(localMeta.Raw, localMeta.RemoteLocal); err != nil {
+	if err = downloadFile(localMeta.Raw, localMeta.RemoteLocal, appConfig); err != nil {
 		return localMeta, err
 	}
 

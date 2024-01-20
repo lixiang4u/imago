@@ -25,7 +25,7 @@ func HashString(data string) string {
 }
 
 func CompressRate(rawSize, convertedSize int64) string {
-	return fmt.Sprintf(`%.2f%%`, 100.0-float64(convertedSize)*100/float64(rawSize))
+	return fmt.Sprintf(`%.2f`, 100.0-float64(convertedSize)*100/float64(rawSize))
 }
 
 func IsDefaultObj(obj interface{}, excludes []string) bool {
