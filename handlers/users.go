@@ -22,6 +22,7 @@ func Debug(ctx *fiber.Ctx) error {
 	return ctx.JSON(respSuccess(fiber.Map{
 		"Hostname": ctx.Hostname(),
 		"time":     time.Now().String(),
+		"UA":       string(ctx.Request().Header.Peek("User-Agent")),
 	}, ""))
 }
 
