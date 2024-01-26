@@ -241,7 +241,7 @@ func ConvertImage(
 	}
 	defer img.Close()
 
-	log.Println("[converting]", rawFile, "=>", convertedFile, img.Format().FileExt(), "=>", format)
+	log.Println("[converting]", rawFile, "=>", convertedFile, img.Format().FileExt(), "=>", format, "config:", utils.ToJsonString(exportConfig, false))
 
 	img = ImageFilter(img, imgConfig)
 

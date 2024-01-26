@@ -131,11 +131,14 @@ func Shrink(ctx *fiber.Ctx) error {
 	go prepareShrinkLog(convertedFile, _size, 0, requestLog, &localMeta, &appConfig)
 
 	return ctx.JSON(fiber.Map{
-		"status": "ok",
-		"url":    fmt.Sprintf("%s/%s", strings.TrimRight(appConfig.OriginSite, "/"), strings.TrimLeft(_converted, "/")),
-		"size":   _size,
-		"rate":   utils.CompressRate(localMeta.Size, _size),
-		"time":   time.Now().Format("2006-01-02 15:04:05"),
+		"status":    "ok",
+		"file_name": fh.Filename,
+		"file_size": fh.Size,
+		"url":       fmt.Sprintf("%s/%s", strings.TrimRight(appConfig.OriginSite, "/"), strings.TrimLeft(_converted, "/")),
+		"path":      _converted,
+		"size":      _size,
+		"rate":      utils.CompressRate(localMeta.Size, _size),
+		"time":      time.Now().Format("2006-01-02 15:04:05"),
 	})
 }
 
