@@ -9,8 +9,13 @@ import (
 	"strings"
 )
 
+// Download https://www.imago.xyz/api/file/upload/d9157.png?filename=1.png&download
 func Download(ctx *fiber.Ctx) error {
+	var isDownload = false
 	var fileName = ctx.Query("filename", filepath.Base(ctx.Params("*")))
+	if _, ok := ctx.Queries()["download"]; ok {
+		isDownload = true
+	}
 	uploadRoot, err := filepath.Abs(path.Dir(models.UploadRoot))
 	if err != nil {
 		return ctx.JSON(fiber.Map{
@@ -37,5 +42,8 @@ func Download(ctx *fiber.Ctx) error {
 			"debug": ctx.Params("*"),
 		})
 	}
-	return ctx.Download(requestFile, fileName)
+	if isDownload {
+		return ctx.Download(requestFile, fileName)
+	}
+	return ctx.SendFile(requestFile)
 }

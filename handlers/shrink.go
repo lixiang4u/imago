@@ -135,7 +135,7 @@ func Shrink(ctx *fiber.Ctx) error {
 		"status":    "ok",
 		"file_name": fh.Filename,
 		"file_size": fh.Size,
-		"url":       fmt.Sprintf("%s/%s", strings.TrimRight(appConfig.OriginSite, "/"), strings.TrimLeft(_converted, "/")),
+		"url":       fmt.Sprintf("%s/file/%s", strings.TrimRight(appConfig.OriginSite, "/"), strings.TrimLeft(_converted, "/")),
 		"path":      _converted,
 		"size":      _size,
 		"rate":      utils.CompressRate(fh.Size, _size),

@@ -17,7 +17,6 @@ func main() {
 		AllowMethods: "*",
 	}))
 
-	app.Static("/upload", models.UploadRoot)
 	app.Get("/", handlers.Index)
 	app.Get("/debug", handlers.Debug)
 	app.Get("/ping", handlers.Ping)
