@@ -19,7 +19,7 @@ func Shrink(ctx *fiber.Ctx) error {
 		StripMetadata: true,
 		Quality:       int(imgConfig.Quality),
 		Lossless:      false,
-		Compression:   imgConfig.Compression,
+		Compression:   6,
 	}
 	appConfig, err := models.GetHostUserConfig(string(ctx.Request().Host()))
 	if err != nil {
