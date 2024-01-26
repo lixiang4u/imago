@@ -19,7 +19,7 @@ func Shrink(ctx *fiber.Ctx) error {
 		StripMetadata: true,
 		Quality:       int(imgConfig.Quality),
 		Lossless:      false,
-		Compression:   6,
+		Compression:   9,
 	}
 	appConfig, err := models.GetHostUserConfig(string(ctx.Request().Host()))
 	if err != nil {
@@ -135,8 +135,8 @@ func Shrink(ctx *fiber.Ctx) error {
 		"status":    "ok",
 		"file_name": fh.Filename,
 		"file_size": fh.Size,
-		"url":       fmt.Sprintf("%s/file/%s", strings.TrimRight(appConfig.OriginSite, "/"), strings.TrimLeft(_converted, "/")),
-		"path":      _converted,
+		"url":       fmt.Sprintf("%s/api/file/%s", strings.TrimRight(appConfig.OriginSite, "/"), strings.TrimLeft(_converted, "/")),
+		"path":      fmt.Sprintf("/api/file/%s", strings.TrimLeft(_converted, "/")),
 		"size":      _size,
 		"rate":      utils.CompressRate(fh.Size, _size),
 		"time":      time.Now().Format("2006-01-02 15:04:05"),
