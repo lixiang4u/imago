@@ -25,6 +25,9 @@ func HashString(data string) string {
 }
 
 func CompressRate(rawSize, convertedSize int64) string {
+	if convertedSize >= rawSize {
+		return fmt.Sprintf(`%.2f`, float64(convertedSize)*100/float64(rawSize))
+	}
 	return fmt.Sprintf(`%.2f`, 100.0-float64(convertedSize)*100/float64(rawSize))
 }
 

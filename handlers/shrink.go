@@ -138,7 +138,7 @@ func Shrink(ctx *fiber.Ctx) error {
 		"url":       fmt.Sprintf("%s/%s", strings.TrimRight(appConfig.OriginSite, "/"), strings.TrimLeft(_converted, "/")),
 		"path":      _converted,
 		"size":      _size,
-		"rate":      utils.CompressRate(localMeta.Size, _size),
+		"rate":      utils.CompressRate(fh.Size, _size),
 		"time":      time.Now().Format("2006-01-02 15:04:05"),
 	})
 }

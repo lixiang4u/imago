@@ -22,6 +22,7 @@ func main() {
 	app.Get("/debug", handlers.Debug)
 	app.Get("/ping", handlers.Ping)
 	app.Post("/shrink", handlers.Shrink)
+	app.Get("/file/*", handlers.Download)
 
 	app.Post("/user/login", handlers.UserLogin)
 	app.Post("/user/register", handlers.UserRegister)
