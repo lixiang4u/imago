@@ -37,7 +37,7 @@ type ImageConfig struct {
 	Refresh      int      `json:"refresh" form:"refresh"`             // 特殊字段，1.表示强制回源，0.默认不强制回源
 	Width        float64  `json:"width" form:"width"`                 // 图片resize的宽度
 	Height       float64  `json:"height" form:"height"`               // 图片resize的高度
-	Flip         string   `json:"flip" form:"flip"`                   //Available options are: v(vertical), h(horizontal), b(Both vertical and horizontal)
+	Flip         string   `json:"flip" form:"flip"`                   // Available options are: v(vertical), h(horizontal), b(Both vertical and horizontal)
 	Quality      float64  `json:"quality" form:"quality"`             // Override quality set in dashbaord, available quality range from 10 ~ 100(100 means lossless convert)
 	Blur         float64  `json:"blur" form:"blur"`                   // Available blur range from 10 ~ 100
 	Sharpen      float64  `json:"sharpen" form:"sharpen"`             // Sharpen the image, available sharpen range from 1 ~ 10
@@ -47,7 +47,8 @@ type ImageConfig struct {
 	Hue          float64  `json:"hue" form:"hue"`                     // Adjust hue of the image, available range from 0 ~ 360, hue will be 0 for no change, 90 for a complementary hue shift, 180 for a contrasting shift, 360 for no change again.
 	Contrast     float64  `json:"contrast" form:"contrast"`           // Adjust contrast of the image, available range from 0 ~ 10, 1 means no change
 	VisualEffect []string `json:"visual_effect" form:"visual_effect"` // 图片添加filter和水印相关，需要编码/解码
-	Format       string   `json:"format" json:"format"`               // 目标图格式，SUPPORT_TYPE_*
+	Format       string   `json:"format" form:"format"`               // 目标图格式，SUPPORT_TYPE_*
+	Compression  int      `json:"compression" form:"compression"`     // PNG 文件压缩级别，取值范围为 0~9，0 表示无压缩，9 表示最高压缩率。
 }
 
 type Watermark struct {

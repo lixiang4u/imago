@@ -333,7 +333,8 @@ func ExportImage(img *vips.ImageRef, toType string, exportParams *models.ExportC
 	case models.SUPPORT_TYPE_PNG:
 		buf, meta, err = img.ExportPng(&vips.PngExportParams{
 			StripMetadata: true,
-			Compression:   6,
+			Filter:        vips.PngFilterAll,
+			Compression:   exportParams.Compression,
 			Quality:       exportParams.Quality,
 		})
 	case models.SUPPORT_TYPE_GIF:
