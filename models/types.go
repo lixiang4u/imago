@@ -105,3 +105,8 @@ type CacheMapValue struct {
 	Id        uint64
 	Timestamp int64
 }
+
+type SimpleFile struct {
+	Path string `json:"path" form:"path"`
+	Name string `json:"name" form:"name"`
+}
