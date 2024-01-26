@@ -52,7 +52,7 @@ func Download(ctx *fiber.Ctx) error {
 }
 
 func Archive(ctx *fiber.Ctx) error {
-	var zipName = ctx.Params("filename", fmt.Sprintf("imago-%s.zip", time.Now().Format("20060102150405")))
+	var zipName = fmt.Sprintf("imago-%s.zip", time.Now().Format("20060102150405"))
 
 	type Req struct {
 		Files []models.SimpleFile `json:"files" form:"files"`
