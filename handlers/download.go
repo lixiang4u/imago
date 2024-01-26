@@ -60,16 +60,24 @@ func Archive(ctx *fiber.Ctx) error {
 	var req Req
 	_ = ctx.BodyParser(&req)
 
+	uploadRoot, err := filepath.Abs(path.Dir(models.UploadRoot))
+	if err != nil {
+		return ctx.JSON(fiber.Map{
+			"error": "上传目录配置异常",
+			"debug": err.Error(),
+		})
+	}
+
 	var sourceFiles []models.SimpleFile
 	for i, file := range req.Files {
 		if i >= 100 {
 			break
 		}
-		tmpFile, err := filepath.Abs(path.Join(path.Dir(models.UploadRoot), strings.TrimPrefix(file.Path, models.FAKE_FILE_PREFIX)))
+		tmpFile, err := filepath.Abs(path.Join(uploadRoot, strings.TrimPrefix(file.Path, models.FAKE_FILE_PREFIX)))
 		if err != nil {
 			continue
 		}
-		if !strings.HasPrefix(tmpFile, models.UploadRoot) {
+		if !strings.HasPrefix(tmpFile, uploadRoot) {
 			continue
 		}
 		_, err = os.Stat(tmpFile)
@@ -86,7 +94,7 @@ func Archive(ctx *fiber.Ctx) error {
 	}
 	if len(sourceFiles) <= 0 {
 		return ctx.JSON(fiber.Map{
-			"error": "打包文件数过多",
+			"error": "打包文件不存在",
 		})
 	}
 
