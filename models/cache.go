@@ -16,8 +16,8 @@ func getHostCacheKey(host string, userId ...uint64) string {
 }
 
 func GetHostUserConfig(host string, userId ...uint64) (AppConfig, error) {
-	var cacheKey = getHostCacheKey(host, userId...)
-	v, ok := LocalCache.Get(cacheKey)
+	host = getHostCacheKey(host, userId...)
+	v, ok := LocalCache.Get(host)
 	if ok {
 		return v.(AppConfig), nil
 	}
@@ -51,7 +51,7 @@ func GetHostUserConfig(host string, userId ...uint64) (AppConfig, error) {
 		Debug:      true,
 	}
 	SetLocalUserConfig(&tmpConfig, tmpConfig, cache.NoExpiration)
-	return tmpConfig, err
+	return tmpConfig, nil
 }
 
 func IncrementRequestCount(appConfig *AppConfig) (int64, error) {

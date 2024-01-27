@@ -41,6 +41,9 @@ func Shrink(ctx *fiber.Ctx) error {
 		})
 	}
 
+	log.Println("[userId]", userId)
+	log.Println("[appConfig]", utils.ToJsonString(appConfig, true))
+
 	fh, err := ctx.FormFile("file")
 	if err != nil {
 		return ctx.JSON(fiber.Map{
