@@ -97,3 +97,15 @@ func IncrementUserRegister() int64 {
 		return n
 	}
 }
+
+func IncrementIpShrink(ip string) int64 {
+	var u = fmt.Sprintf("global-ip-shrink-count")
+	if _, ok := LocalCache.Get(ip); !ok {
+		// 需要配合数据库
+		LocalCache.Set(u, int64(1), time.Hour*24)
+		return 1
+	} else {
+		n, _ := LocalCache.IncrementInt64(u, 1)
+		return n
+	}
+}

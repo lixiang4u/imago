@@ -14,6 +14,12 @@ import (
 )
 
 func Shrink(ctx *fiber.Ctx) error {
+	if utils.TryParseUserId(ctx) <= 0 && models.IncrementIpShrink(utils.GetClientIp(ctx)) >= int64(models.GuestUserShrinkCount) {
+		return ctx.JSON(fiber.Map{
+			"error": "访客每日处理图片已达上限",
+		})
+	}
+
 	var imgConfig = parseConfig(ctx)
 	var exportConfig = models.ExportConfig{
 		StripMetadata: true,
@@ -96,7 +102,7 @@ func Shrink(ctx *fiber.Ctx) error {
 		OriginUrl:  localMeta.Raw,
 		Referer:    ctx.Get("Referer"),
 		UA:         imgConfig.HttpUA,
-		Ip:         ctx.IP(),
+		Ip:         utils.GetClientIp(ctx, true),
 		IsCache:    0,
 		CreatedAt:  time.Now(),
 	}

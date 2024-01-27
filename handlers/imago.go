@@ -84,7 +84,7 @@ func Image(ctx *fiber.Ctx) error {
 		OriginUrl:  localMeta.Raw,
 		Referer:    ctx.Get("Referer"),
 		UA:         imgConfig.HttpUA,
-		Ip:         ctx.IP(),
+		Ip:         utils.GetClientIp(ctx, true),
 		IsCache:    1,
 		CreatedAt:  now,
 	}
