@@ -8,15 +8,6 @@ import (
 	"time"
 )
 
-var defaultAppConfig = AppConfig{
-	UserId:     DEFAULT_UID,
-	ProxyId:    0,
-	OriginSite: LocalConfig.App.Remote,
-	LocalPath:  LocalConfig.App.Local,
-	ProxyHost:  "",
-	Refresh:    0,
-}
-
 func getHostCacheKey(host string, userId ...uint64) string {
 	if len(userId) > 0 && userId[0] > 0 {
 		return fmt.Sprintf("%d@%s", userId[0], host)
@@ -27,40 +18,40 @@ func getHostCacheKey(host string, userId ...uint64) string {
 func GetHostUserConfig(host string, userId ...uint64) (AppConfig, error) {
 	var cacheKey = getHostCacheKey(host, userId...)
 	v, ok := LocalCache.Get(cacheKey)
-	if !ok {
-		var up UserProxy
-		var err error
-		up, err = GetHostUserProxy(host, userId...)
-		if err != nil {
-			// 指定用户，但是用户ID为真（普通用户）
-			if len(userId) > 0 && userId[0] > 0 {
-				up = CreateDefaultUserProxy(userId[0], host) // 创建用户默认代理
-			}
-			// 指定用户，但是用户ID为0（Guest用户）
-			if len(userId) > 0 && userId[0] <= 0 {
-				return defaultAppConfig, nil
-			}
-		}
-		if up.Id <= 0 {
-			return AppConfig{}, errors.New(fmt.Sprintf("代理不存在：%s", host))
-		}
-		if len(up.UserAgent) == 0 {
-			up.UserAgent = UserAgent
-		}
-		v = AppConfig{
-			UserId:     up.UserId,
-			ProxyId:    up.Id,
-			OriginSite: strings.TrimSpace(up.Origin), //https://abc.imago-service.xyz
-			UserAgent:  strings.TrimSpace(up.UserAgent),
-			Cors:       strings.TrimSpace(up.Cors),
-			ProxyHost:  strings.TrimSpace(up.Host), //abc.imago-service.xyz
-			LocalPath:  "",
-			Refresh:    0,
-			Debug:      true,
-		}
-		SetLocalUserConfig((v).(*AppConfig), v, cache.NoExpiration)
+	if ok {
+		return v.(AppConfig), nil
 	}
-	return v.(AppConfig), nil
+
+	up, err := GetHostUserProxy(host, userId...)
+	if err != nil {
+		// 指定用户，但是用户ID为真（普通用户）
+		if len(userId) > 0 && userId[0] > 0 {
+			up = CreateDefaultUserProxy(userId[0], host) // 创建用户默认代理
+		}
+		// 指定用户，但是用户ID为0（Guest用户）
+		if len(userId) > 0 && userId[0] <= 0 {
+			return AppConfig{UserId: 0, ProxyId: 0, OriginSite: host, ProxyHost: host}, nil
+		}
+	}
+	if up.Id <= 0 {
+		return AppConfig{}, errors.New(fmt.Sprintf("代理不存在：%s", host))
+	}
+	if len(up.UserAgent) == 0 {
+		up.UserAgent = UserAgent
+	}
+	var tmpConfig = AppConfig{
+		UserId:     up.UserId,
+		ProxyId:    up.Id,
+		OriginSite: strings.TrimSpace(up.Origin), //https://abc.imago-service.xyz
+		UserAgent:  strings.TrimSpace(up.UserAgent),
+		Cors:       strings.TrimSpace(up.Cors),
+		ProxyHost:  strings.TrimSpace(up.Host), //abc.imago-service.xyz
+		LocalPath:  "",
+		Refresh:    0,
+		Debug:      true,
+	}
+	SetLocalUserConfig(&tmpConfig, tmpConfig, cache.NoExpiration)
+	return tmpConfig, err
 }
 
 func IncrementRequestCount(appConfig *AppConfig) (int64, error) {
