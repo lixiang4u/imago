@@ -102,7 +102,7 @@ func Shrink(ctx *fiber.Ctx) error {
 		OriginUrl:  localMeta.Raw,
 		Referer:    ctx.Get("Referer"),
 		UA:         imgConfig.HttpUA,
-		Ip:         utils.GetClientIp(ctx, true),
+		Ip:         utils.GetClientIp(ctx),
 		IsCache:    0,
 		CreatedAt:  time.Now(),
 	}
