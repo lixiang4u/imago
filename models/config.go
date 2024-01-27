@@ -26,6 +26,7 @@ var (
 	SECRET_KEY   = "89f882e4f6ce47b8.926ec8e789f882e4f6ce47b876d7029c"
 
 	GuestUserShrinkCount = 100         // 访客每日处理图片数量
+	WebUserShrinkCount   = 2000        // 普通用户web端每日处理图片数量
 	FAKE_FILE_PREFIX     = "/api/file" // web端压缩文件后的文件地址前缀目录
 
 	SUPPORT_TYPE_RAW    = "raw"

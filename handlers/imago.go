@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/davidbyttow/govips/v2/vips"
 	"github.com/gofiber/fiber/v2"
@@ -92,7 +91,7 @@ func Image(ctx *fiber.Ctx) error {
 		requestLog.IsCache = 0
 	}
 
-	reqCount, _ := models.RequestMessage(appConfig.ProxyHost)
+	reqCount, _ := models.IncrementRequestCount(&appConfig)
 
 	// 源文件不存在
 	if !utils.FileExists(localMeta.RemoteLocal) {
@@ -110,11 +109,8 @@ func Image(ctx *fiber.Ctx) error {
 		return nil
 	}
 
-	go func() { _ = prepareRequestLog(requestLog, 1) }()
-
 	var mime = utils.GetFileMIME(convertedFile)
-
-	reqOkCount, _ := models.IncrementRequestOkCount(appConfig.ProxyHost)
+	reqOkCount, _ := models.IncrementRequestOkCount(&appConfig)
 
 	ctx.Set("Content-Type", mime.Value)
 	if len(appConfig.Cors) > 0 {
@@ -127,29 +123,7 @@ func Image(ctx *fiber.Ctx) error {
 	}
 
 	// 统计
-	go func() {
-		_ = prepareRequestStat(&models.RequestStat{
-			UserId:       appConfig.UserId,
-			ProxyId:      appConfig.ProxyId,
-			MetaId:       localMeta.Id,
-			OriginUrl:    localMeta.Raw,
-			RequestCount: 1,
-			ResponseByte: uint64(convertedSize),
-			SavedByte:    uint64(localMeta.Size - convertedSize),
-			CreatedAt:    now,
-		})
-		_ = prepareUserFiles(&models.UserFiles{
-			UserId:      appConfig.UserId,
-			ProxyId:     appConfig.ProxyId,
-			MetaId:      localMeta.Id,
-			OriginUrl:   localMeta.Raw,
-			OriginFile:  localMeta.RemoteLocal,
-			ConvertFile: convertedFile,
-			OriginSize:  uint64(localMeta.Size),
-			ConvertSize: uint64(convertedSize),
-			CreatedAt:   now,
-		})
-	}()
+	go prepareShrinkLog(convertedFile, convertedSize, 1, requestLog, &localMeta, &appConfig)
 
 	return ctx.SendFile(convertedFile)
 }
@@ -258,41 +232,4 @@ func ConvertImage(
 	}
 
 	return converted, utils.FileSize(convertedFile), nil
-}
-
-func prepareRequestLog(requestLog *models.RequestLog, isExist int8) error {
-	requestLog.IsExist = isExist
-	buf, err := json.Marshal(requestLog)
-	if err != nil {
-		return err
-	}
-	err = models.NsqProducer(models.TopicRequest, buf)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func prepareRequestStat(requestStat *models.RequestStat) error {
-	buf, err := json.Marshal(requestStat)
-	if err != nil {
-		return err
-	}
-	err = models.NsqProducer(models.TopicRequestStat, buf)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func prepareUserFiles(userFiles *models.UserFiles) error {
-	buf, err := json.Marshal(userFiles)
-	if err != nil {
-		return err
-	}
-	err = models.NsqProducer(models.TopicUserFiles, buf)
-	if err != nil {
-		return err
-	}
-	return nil
 }

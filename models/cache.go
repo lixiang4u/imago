@@ -17,55 +17,65 @@ var defaultAppConfig = AppConfig{
 	Refresh:    0,
 }
 
-func GetHostUserConfig(host string) (AppConfig, error) {
-	if len(host) == 0 {
-		return defaultAppConfig, nil
+func getHostCacheKey(host string, userId ...uint64) string {
+	if len(userId) > 0 && userId[0] > 0 {
+		return fmt.Sprintf("%d@%s", userId[0], host)
 	}
-	v, ok := LocalCache.Get(host)
+	return host
+}
+
+func GetHostUserConfig(host string, userId ...uint64) (AppConfig, error) {
+	var cacheKey = getHostCacheKey(host, userId...)
+	v, ok := LocalCache.Get(cacheKey)
 	if !ok {
-		// 去数据库查找用户，并将id赋值给v
-		// 查询不到也需要给个空数据，让他缓存下次不走数据库
-		var d = cache.NoExpiration
-		up, err := GetHostUserProxy(host)
-		if err != nil || up.Status != PROXY_STATUS_OK {
-			v = defaultAppConfig
-			d = time.Duration(time.Minute) * 10
-		} else {
-			if len(up.UserAgent) == 0 {
-				up.UserAgent = UserAgent
+		var up UserProxy
+		var err error
+		up, err = GetHostUserProxy(host, userId...)
+		if err != nil {
+			// 指定用户，但是用户ID为真（普通用户）
+			if len(userId) > 0 && userId[0] > 0 {
+				up = CreateDefaultUserProxy(userId[0], host) // 创建用户默认代理
 			}
-			v = AppConfig{
-				UserId:     up.UserId,
-				ProxyId:    up.Id,
-				OriginSite: strings.TrimSpace(up.Origin), //https://abc.imago-service.xyz
-				UserAgent:  strings.TrimSpace(up.UserAgent),
-				Cors:       strings.TrimSpace(up.Cors),
-				ProxyHost:  strings.TrimSpace(up.Host), //abc.imago-service.xyz
-				LocalPath:  "",
-				Refresh:    0,
-				Debug:      true,
+			// 指定用户，但是用户ID为0（Guest用户）
+			if len(userId) > 0 && userId[0] <= 0 {
+				return defaultAppConfig, nil
 			}
 		}
-		SetLocalUserConfig(host, v, d)
-	}
-	if v.(AppConfig).ProxyHost != host {
-		return defaultAppConfig, errors.New("源站未注册：" + host)
+		if up.Id <= 0 {
+			return AppConfig{}, errors.New(fmt.Sprintf("代理不存在：%s", host))
+		}
+		if len(up.UserAgent) == 0 {
+			up.UserAgent = UserAgent
+		}
+		v = AppConfig{
+			UserId:     up.UserId,
+			ProxyId:    up.Id,
+			OriginSite: strings.TrimSpace(up.Origin), //https://abc.imago-service.xyz
+			UserAgent:  strings.TrimSpace(up.UserAgent),
+			Cors:       strings.TrimSpace(up.Cors),
+			ProxyHost:  strings.TrimSpace(up.Host), //abc.imago-service.xyz
+			LocalPath:  "",
+			Refresh:    0,
+			Debug:      true,
+		}
+		SetLocalUserConfig((v).(*AppConfig), v, cache.NoExpiration)
 	}
 	return v.(AppConfig), nil
 }
 
-func RequestMessage(host string) (int64, error) {
-	return LocalCache.IncrementInt64(fmt.Sprintf("%s-request", host), 1)
+func IncrementRequestCount(appConfig *AppConfig) (int64, error) {
+	return LocalCache.IncrementInt64(fmt.Sprintf("%s-request", getHostCacheKey(appConfig.ProxyHost, appConfig.UserId)), 1)
 }
 
-func IncrementRequestOkCount(host string) (int64, error) {
-	return LocalCache.IncrementInt64(fmt.Sprintf("%s-request-ok", host), 1)
+func IncrementRequestOkCount(appConfig *AppConfig) (int64, error) {
+	return LocalCache.IncrementInt64(fmt.Sprintf("%s-request-ok", getHostCacheKey(appConfig.ProxyHost, appConfig.UserId)), 1)
 }
 
-func SetLocalUserConfig(host string, x interface{}, d time.Duration) {
-	LocalCache.Set(host, x, d)
-	LocalCache.Set(fmt.Sprintf("%s-request", host), int64(0), d)
-	LocalCache.Set(fmt.Sprintf("%s-request-ok", host), int64(0), d)
+func SetLocalUserConfig(appConfig *AppConfig, x interface{}, d time.Duration) {
+	var cacheKey = getHostCacheKey(appConfig.ProxyHost, appConfig.UserId)
+	LocalCache.Set(cacheKey, x, d)
+	LocalCache.Set(fmt.Sprintf("%s-request", cacheKey), int64(0), d)
+	LocalCache.Set(fmt.Sprintf("%s-request-ok", cacheKey), int64(0), d)
 }
 
 func IncrementLoginError(userId uint64) int64 {
@@ -98,9 +108,9 @@ func IncrementUserRegister() int64 {
 	}
 }
 
-func IncrementIpShrink(ip string) int64 {
-	var u = fmt.Sprintf("global-ip-shrink-count")
-	if _, ok := LocalCache.Get(ip); !ok {
+func IncrementWebShrinkCount(cacheKey string) int64 {
+	var u = fmt.Sprintf("global-user-shrink-count")
+	if _, ok := LocalCache.Get(cacheKey); !ok {
 		// 需要配合数据库
 		LocalCache.Set(u, int64(1), time.Hour*24)
 		return 1

@@ -14,9 +14,16 @@ import (
 )
 
 func Shrink(ctx *fiber.Ctx) error {
-	if utils.TryParseUserId(ctx) <= 0 && models.IncrementIpShrink(utils.GetClientIp(ctx)) >= int64(models.GuestUserShrinkCount) {
+	var userId = utils.TryParseUserId(ctx)
+	var count = models.IncrementWebShrinkCount(utils.GetClientIp(ctx))
+	if userId <= 0 && count >= int64(models.GuestUserShrinkCount) {
 		return ctx.JSON(fiber.Map{
 			"error": "访客每日处理图片已达上限",
+		})
+	}
+	if userId > 0 && count >= int64(models.WebUserShrinkCount) {
+		return ctx.JSON(fiber.Map{
+			"error": "每日处理图片已达上限",
 		})
 	}
 
@@ -27,7 +34,7 @@ func Shrink(ctx *fiber.Ctx) error {
 		Lossless:      false,
 		Compression:   9,
 	}
-	appConfig, err := models.GetHostUserConfig(string(ctx.Request().Host()))
+	appConfig, err := models.GetHostUserConfig(string(ctx.Request().Host()), userId)
 	if err != nil {
 		return ctx.JSON(fiber.Map{
 			"error": err.Error(),
@@ -147,33 +154,4 @@ func Shrink(ctx *fiber.Ctx) error {
 		"rate":      utils.CompressRate(fh.Size, _size),
 		"time":      time.Now().Format("2006-01-02 15:04:05"),
 	})
-}
-
-func prepareShrinkLog(convertedFile string, convertedSize int64, isExist int8, requestLog *models.RequestLog, localMeta *models.LocalMeta, appConfig *models.AppConfig) {
-	var now = time.Now()
-
-	_ = prepareRequestLog(requestLog, isExist)
-
-	_ = prepareRequestStat(&models.RequestStat{
-		UserId:       appConfig.UserId,
-		ProxyId:      appConfig.ProxyId,
-		MetaId:       localMeta.Id,
-		OriginUrl:    localMeta.Raw,
-		RequestCount: 1,
-		ResponseByte: uint64(convertedSize),
-		SavedByte:    uint64(localMeta.Size - convertedSize),
-		CreatedAt:    now,
-	})
-	_ = prepareUserFiles(&models.UserFiles{
-		UserId:      appConfig.UserId,
-		ProxyId:     appConfig.ProxyId,
-		MetaId:      localMeta.Id,
-		OriginUrl:   localMeta.Raw,
-		OriginFile:  localMeta.RemoteLocal,
-		ConvertFile: convertedFile,
-		OriginSize:  uint64(localMeta.Size),
-		ConvertSize: uint64(convertedSize),
-		CreatedAt:   now,
-	})
-
 }

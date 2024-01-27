@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 // status 1.正常，0.未开启
 const PROXY_STATUS_OK = 1
@@ -24,8 +27,12 @@ func (UserProxy) TableName() string {
 	return "user_proxy"
 }
 
-func GetHostUserProxy(host string) (userProxy UserProxy, err error) {
-	if err := DB().Model(&userProxy).Where("host", host).Take(&userProxy).Error; err != nil {
+func GetHostUserProxy(host string, userId ...uint64) (userProxy UserProxy, err error) {
+	engin := DB().Model(&userProxy).Where("host", host)
+	if len(userId) > 0 && userId[0] > 0 {
+		engin.Where("user_id", userId[0])
+	}
+	if err := engin.Take(&userProxy).Error; err != nil {
 		return userProxy, err
 	}
 	return userProxy, nil
@@ -37,4 +44,21 @@ func GetUserProxyCount(userId uint64) int64 {
 		return count
 	}
 	return count
+}
+
+func CreateDefaultUserProxy(userId uint64, host string) UserProxy {
+	var m = UserProxy{
+		UserId:    userId,
+		Title:     "默认代理",
+		Origin:    fmt.Sprintf("%d@%s", userId, host),
+		Host:      fmt.Sprintf("%d@%s", userId, host),
+		Quality:   80,
+		UserAgent: "",
+		Cors:      "",
+		Referer:   "",
+		Status:    PROXY_STATUS_OK,
+		CreatedAt: time.Now(),
+	}
+	DB().Create(&m)
+	return m
 }
