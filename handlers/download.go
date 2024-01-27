@@ -114,5 +114,8 @@ func Archive(ctx *fiber.Ctx) error {
 	}
 	defer func() { _ = os.Remove(zipFile) }()
 
+	// https://developer.mozilla.org/zh-CN/docs/Glossary/Simple_response_header
+	ctx.Response().Header.Add("X-zip_name", zipName)
+
 	return ctx.Download(zipFile, zipName)
 }

@@ -19,15 +19,15 @@ func CreateZip(zipFile string, sourceFiles []models.SimpleFile) (n int64, err er
 	defer func() { _ = zipWriter.Close() }()
 
 	for _, file := range sourceFiles {
-		if AddZipFile(file.Path, zipWriter) == nil {
+		if AddZipFile(file, zipWriter) == nil {
 			n++
 		}
 	}
 	return n, nil
 }
 
-func AddZipFile(sourceFile string, zipWriter *zip.Writer) error {
-	fileToZip, err := os.Open(sourceFile)
+func AddZipFile(simpleFile models.SimpleFile, zipWriter *zip.Writer) error {
+	fileToZip, err := os.Open(simpleFile.Path)
 	if err != nil {
 		log.Println("[osOpenError]", err.Error())
 		return err
@@ -46,7 +46,9 @@ func AddZipFile(sourceFile string, zipWriter *zip.Writer) error {
 		log.Println("[fileToZipHeaderError]", err.Error())
 		return err
 	}
-
+	if len(simpleFile.Name) > 0 {
+		header.Name = simpleFile.Name
+	}
 	// 设置压缩方法为默认压缩
 	header.Method = zip.Deflate
 

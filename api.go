@@ -15,6 +15,8 @@ func main() {
 		AllowOrigins: "*",
 		AllowHeaders: "*",
 		AllowMethods: "*",
+		// https://developer.mozilla.org/zh-CN/docs/Glossary/Simple_response_header
+		ExposeHeaders: "Content-Disposition, X-zip_name",
 	}))
 
 	app.Get("/", handlers.Index)
