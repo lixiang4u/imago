@@ -43,15 +43,6 @@ func Upload(ctx *fiber.Ctx) error {
 		})
 	}
 
-	var ext = strings.ToLower(strings.Trim(path.Ext(fh.Filename), "."))
-	var savedFile = utils.GetUploadFilePath(utils.FormattedUUID(32), "", ext)
-
-	if err = os.MkdirAll(path.Dir(savedFile), 0666); err != nil {
-		return ctx.JSON(fiber.Map{
-			"error": "文件上传失败",
-			"debug": err.Error(),
-		})
-	}
 	f, err := fh.Open()
 	if err != nil {
 		return ctx.JSON(fiber.Map{
@@ -68,7 +59,20 @@ func Upload(ctx *fiber.Ctx) error {
 			"debug": err.Error(),
 		})
 	}
-	var hash = utils.BytesMd5(buf)
+	var hash = utils.BytesMd5(append(buf, []byte(models.SECRET_KEY)...))
+
+	var ext = strings.ToLower(strings.Trim(path.Ext(fh.Filename), "."))
+	var savedFile = utils.GetUploadFilePath(hash, "", ext)
+	if utils.FileSize(savedFile) > 0 {
+		// 文件是存在的
+		return ctx.JSON(fiber.Map{
+			"status": "ok",
+			"name":   fh.Filename,
+			"size":   fh.Size,
+			"path":   savedFile,
+			"hash":   hash,
+		})
+	}
 
 	// https://github.com/h2non/filetype
 	var mime = utils.GetBytesMIME(&buf)
@@ -76,6 +80,12 @@ func Upload(ctx *fiber.Ctx) error {
 		return ctx.JSON(fiber.Map{
 			"error": "文件格式不支持",
 			"mime":  mime,
+		})
+	}
+	if err = os.MkdirAll(path.Dir(savedFile), 0666); err != nil {
+		return ctx.JSON(fiber.Map{
+			"error": "文件上传失败",
+			"debug": err.Error(),
 		})
 	}
 	if err = ctx.SaveFile(fh, savedFile); err != nil {

@@ -15,7 +15,7 @@ func GetClientIp(ctx *fiber.Ctx, all ...bool) string {
 
 	ips = UniqueList(ips)
 
-	log.Println("[ips]", string(ctx.Request().RequestURI()), strings.Join(ips, ", "))
+	log.Println("[request]", string(ctx.Request().RequestURI()), strings.Join(ips, ", "))
 
 	if len(all) > 0 && all[0] {
 		return strings.Join(ips, ", ")
