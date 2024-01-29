@@ -51,7 +51,7 @@ func Upload(ctx *fiber.Ctx) error {
 
 	// https://github.com/h2non/filetype
 	var mime = utils.GetReaderMIME(f)
-	if !slices.Contains(imageMIMETypes, mime.Type) {
+	if !slices.Contains(imageMIMETypes, mime.Value) {
 		return ctx.JSON(fiber.Map{
 			"error": "文件格式不支持",
 			"mime":  mime,

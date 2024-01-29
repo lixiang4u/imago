@@ -123,6 +123,7 @@ func FileSize(fileName string) int64 {
 func GetFileMIME(fileName string) types.MIME {
 	buf, _ := os.ReadFile(fileName)
 	kind, _ := filetype.Match(buf)
+	// { "Type": "image", "Subtype": "png", "Value": "image/png" }
 	return kind.MIME
 }
 
