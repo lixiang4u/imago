@@ -136,3 +136,11 @@ func GetBytesMIME(buf *[]byte) types.MIME {
 	kind, _ := filetype.Match(*buf)
 	return kind.MIME
 }
+
+func AbsPath(path string) string {
+	p, err := filepath.Abs(path)
+	if err != nil {
+		return ""
+	}
+	return p
+}

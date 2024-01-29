@@ -24,6 +24,7 @@ func main() {
 	app.Get("/ping", handlers.Ping)
 	app.Post("/upload", handlers.Upload)
 	app.Post("/shrink", handlers.Shrink)
+	app.Post("/process", handlers.Process)
 	app.Get("/file/*", handlers.Download)
 	app.Post("/archive/zip", handlers.Archive)
 

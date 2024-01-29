@@ -8,10 +8,29 @@ import (
 	"log"
 	"os"
 	"path"
+	"path/filepath"
 	"slices"
 	"strings"
 	"time"
 )
+
+func Process(ctx *fiber.Ctx) error {
+	type PostRequest struct {
+		Path string `json:"path" form:"path"`
+	}
+
+	var postRequest PostRequest
+	if err := ctx.BodyParser(&postRequest); err != nil {
+		return ctx.JSON(respError("参数错误", nil))
+	}
+	var file = filepath.Join(models.UploadRoot, "../", postRequest.Path)
+
+	return ctx.JSON(fiber.Map{
+		"status": "ok",
+		"file":   file,
+		"abs":    utils.AbsPath(file),
+	})
+}
 
 func Shrink(ctx *fiber.Ctx) error {
 	var userId = utils.TryParseUserId(ctx)
