@@ -26,15 +26,11 @@ func parseConfig(ctx *fiber.Ctx) models.ImageConfig {
 
 	switch ctx.Method() {
 	case "POST":
-		if err := ctx.BodyParser(&config); err != nil {
-			log.Println("[QueryParser]", err.Error())
-		}
+		_ = ctx.BodyParser(&config)
 	case "GET":
 		fallthrough
 	default:
-		if err := ctx.QueryParser(&config); err != nil {
-			log.Println("[QueryParser]", err.Error())
-		}
+		_ = ctx.QueryParser(&config)
 	}
 
 	log.Println("[QueryParser]", ctx.OriginalURL(), utils.ToJsonString(config, false))
@@ -68,11 +64,6 @@ func Image(ctx *fiber.Ctx) error {
 		StripMetadata: true,
 		Quality:       int(imgConfig.Quality),
 		Lossless:      false,
-	}
-
-	if appConfig.Debug {
-		log.Println("[appConfig]", utils.ToJsonString(appConfig, false))
-		log.Println("[localMeta]", utils.ToJsonString(localMeta, false))
 	}
 
 	var requestLog = &models.RequestLog{

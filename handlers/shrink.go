@@ -5,7 +5,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/lixiang4u/imago/models"
 	"github.com/lixiang4u/imago/utils"
-	"log"
 	"path/filepath"
 	"strings"
 	"time"
@@ -34,8 +33,6 @@ func Process(ctx *fiber.Ctx) error {
 	if err != nil {
 		return ctx.JSON(respErrorDebug("系统错误", err.Error()))
 	}
-
-	log.Println("[appConfig]", utils.ToJsonString(appConfig, true))
 
 	var localMeta = models.LocalMeta{
 		Id:          utils.FormattedUUID(16),
