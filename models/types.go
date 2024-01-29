@@ -110,3 +110,8 @@ type SimpleFile struct {
 	Path string `json:"path" form:"path"`
 	Name string `json:"name" form:"name"`
 }
+
+type AdminCommand struct {
+	Command int         `json:"command" form:"command"`
+	Body    interface{} `json:"body" form:"body"`
+}

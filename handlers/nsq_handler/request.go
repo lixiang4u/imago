@@ -8,7 +8,7 @@ import (
 
 type RequestHandler struct{}
 
-func (x RequestHandler) HandleMessage(message *nsq.Message) error {
+func (x *RequestHandler) HandleMessage(message *nsq.Message) error {
 	if len(message.Body) == 0 {
 		return nil
 	}
@@ -25,3 +25,5 @@ func (x RequestHandler) HandleMessage(message *nsq.Message) error {
 
 	return nil
 }
+
+func (x *RequestHandler) FreeCache() {}

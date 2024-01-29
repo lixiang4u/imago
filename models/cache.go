@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func getHostCacheKey(host string, userId ...uint64) string {
+func GetHostCacheKey(host string, userId ...uint64) string {
 	if len(userId) > 0 && userId[0] > 0 {
 		return fmt.Sprintf("%d@%s", userId[0], host)
 	}
@@ -16,7 +16,7 @@ func getHostCacheKey(host string, userId ...uint64) string {
 }
 
 func GetHostUserConfig(host string, userId ...uint64) (AppConfig, error) {
-	host = getHostCacheKey(host, userId...)
+	host = GetHostCacheKey(host, userId...)
 	v, ok := LocalCache.Get(host)
 	if ok {
 		return v.(AppConfig), nil
@@ -55,15 +55,15 @@ func GetHostUserConfig(host string, userId ...uint64) (AppConfig, error) {
 }
 
 func IncrementRequestCount(appConfig *AppConfig) (int64, error) {
-	return LocalCache.IncrementInt64(fmt.Sprintf("%s-request", getHostCacheKey(appConfig.ProxyHost, appConfig.UserId)), 1)
+	return LocalCache.IncrementInt64(fmt.Sprintf("%s-request", GetHostCacheKey(appConfig.ProxyHost, appConfig.UserId)), 1)
 }
 
 func IncrementRequestOkCount(appConfig *AppConfig) (int64, error) {
-	return LocalCache.IncrementInt64(fmt.Sprintf("%s-request-ok", getHostCacheKey(appConfig.ProxyHost, appConfig.UserId)), 1)
+	return LocalCache.IncrementInt64(fmt.Sprintf("%s-request-ok", GetHostCacheKey(appConfig.ProxyHost, appConfig.UserId)), 1)
 }
 
 func SetLocalUserConfig(appConfig *AppConfig, x interface{}, d time.Duration) {
-	var cacheKey = getHostCacheKey(appConfig.ProxyHost, appConfig.UserId)
+	var cacheKey = GetHostCacheKey(appConfig.ProxyHost, appConfig.UserId)
 	LocalCache.Set(cacheKey, x, d)
 	LocalCache.Set(fmt.Sprintf("%s-request", cacheKey), int64(0), d)
 	LocalCache.Set(fmt.Sprintf("%s-request-ok", cacheKey), int64(0), d)

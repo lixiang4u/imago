@@ -14,6 +14,7 @@ type NsqConsumeHandler struct {
 	consumer2 *nsq.Consumer
 	consumer3 *nsq.Consumer
 	consumer4 *nsq.Consumer
+	consumer5 *nsq.Consumer
 }
 
 func (x *NsqConsumeHandler) HandleMessage() error {
@@ -42,6 +43,12 @@ func (x *NsqConsumeHandler) HandleMessage() error {
 		return err
 	}
 
+	var h5 = &nsq_handler.AdminCommandHandler{}
+	x.consumer5, err = models.NsqConsumer(models.TopicAdminCommand, models.NsqChannel, h5)
+	if err != nil {
+		return err
+	}
+
 	go func() {
 		var t = time.NewTicker(time.Minute * 5)
 		defer t.Stop()
@@ -50,9 +57,11 @@ func (x *NsqConsumeHandler) HandleMessage() error {
 			case <-t.C:
 				var tp = time.Now().Unix()
 				log.Println("[HandleMessage.Ticker]")
+				h1.FreeCache()
 				h2.FreeCache()
 				h3.FreeCache()
 				h4.FreeCache()
+				h5.FreeCache()
 				log.Println(fmt.Sprintf("[HandleMessage.Ticker] 耗时 %d 秒", time.Now().Unix()-tp))
 			}
 		}
@@ -77,5 +86,9 @@ func (x *NsqConsumeHandler) NsqStop() {
 	if x.consumer4 != nil {
 		log.Println("consumer4.Stop()")
 		x.consumer4.Stop()
+	}
+	if x.consumer5 != nil {
+		log.Println("consumer5.Stop()")
+		x.consumer5.Stop()
 	}
 }

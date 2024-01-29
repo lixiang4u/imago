@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
@@ -224,6 +225,8 @@ func CreateUserProxy(ctx *fiber.Ctx) error {
 		return ctx.JSON(respErrorDebug("创建失败", err.Error()))
 	}
 
+	_ = notifyUpdateUserProxy(up)
+
 	return ctx.JSON(respSuccess(nil, "创建成功"))
 }
 
@@ -263,6 +266,10 @@ func UpdateUserProxy(ctx *fiber.Ctx) error {
 		return ctx.JSON(respErrorDebug("修改失败", err.Error()))
 	}
 
+	var up models.UserProxy
+	models.DB().Model(&up).Where("id", id).Where("user_id", userId).Take(&up)
+	_ = notifyUpdateUserProxy(up)
+
 	return ctx.JSON(respSuccess(nil, "修改成功"))
 }
 
@@ -271,9 +278,15 @@ func DeleteUserProxy(ctx *fiber.Ctx) error {
 	claims := (ctx.Locals("user").(*jwt.Token)).Claims.(jwt.MapClaims)
 	var userId = uint64(claims["id"].(float64))
 
+	var up models.UserProxy
+	if e := models.DB().Model(&up).Where("id", id).Where("user_id", userId).Take(&up).Error; e != nil {
+		return ctx.JSON(respErrorDebug("数据不存在"))
+	}
 	if err := models.DB().Where("id", id).Where("user_id", userId).Delete(&models.UserProxy{}).Error; err != nil {
 		return ctx.JSON(respErrorDebug("删除失败", err.Error()))
 	}
+
+	_ = notifyUpdateUserProxy(up)
 
 	return ctx.JSON(respSuccess(nil, "删除成功"))
 }
@@ -444,4 +457,16 @@ func ListUserProxyProxyRequestStat(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.JSON(respSuccess(respLogs, "ok"))
+}
+
+func notifyUpdateUserProxy(proxy models.UserProxy) error {
+	buf, err := json.Marshal(proxy)
+	if err != nil {
+		return err
+	}
+	err = models.NsqProducer(models.TopicAdminCommand, buf)
+	if err != nil {
+		return err
+	}
+	return nil
 }

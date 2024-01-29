@@ -7,14 +7,15 @@ import (
 )
 
 var (
-	TopicRequest     = "topic-request"
-	TopicRequestStat = "topic-request-stat"
-	TopicUserFiles   = "topic-user-files"
-	NsqChannel       = "channel"
-	nsqLookupdAddr   = "localhost:4161"
-	nsqdAddr         = "127.0.0.1:4150"
-	nsqConfig        = nsq.NewConfig()
-	nsqProducer      *nsq.Producer
+	TopicRequest      = "topic-request"
+	TopicRequestStat  = "topic-request-stat"
+	TopicUserFiles    = "topic-user-files"
+	TopicAdminCommand = "topic-admin-command" // 管理端修改用户相关信息等，通知服务更新数据
+	NsqChannel        = "channel"
+	nsqLookupdAddr    = "localhost:4161"
+	nsqdAddr          = "127.0.0.1:4150"
+	nsqConfig         = nsq.NewConfig()
+	nsqProducer       *nsq.Producer
 )
 
 func NsqConsumer(topic, channel string, handler nsq.Handler) (consumer *nsq.Consumer, err error) {
