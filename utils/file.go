@@ -131,3 +131,8 @@ func GetReaderMIME(reader io.Reader) types.MIME {
 	kind, _ := filetype.MatchReader(reader)
 	return kind.MIME
 }
+
+func GetBytesMIME(buf *[]byte) types.MIME {
+	kind, _ := filetype.Match(*buf)
+	return kind.MIME
+}
