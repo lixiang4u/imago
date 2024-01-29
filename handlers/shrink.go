@@ -20,15 +20,109 @@ func Process(ctx *fiber.Ctx) error {
 	}
 
 	var postRequest PostRequest
-	if err := ctx.BodyParser(&postRequest); err != nil {
-		return ctx.JSON(respError("参数错误", nil))
-	}
+	_ = ctx.BodyParser(&postRequest)
+
 	var file = filepath.Join(models.UploadRoot, "../", postRequest.Path)
+	if !strings.HasPrefix(utils.AbsPath(file), utils.AbsPath(models.UploadRoot)) {
+		return ctx.JSON(fiber.Map{
+			"error": "图片不存在",
+		})
+	}
+	var fileSize = utils.FileSize(file)
+	if fileSize <= 0 {
+		return ctx.JSON(fiber.Map{
+			"error": "图片不存在",
+		})
+	}
+
+	var userId = utils.TryParseUserId(ctx)
+	var imgConfig = parseConfig(ctx)
+	var exportConfig = models.ExportConfig{
+		StripMetadata: true,
+		Quality:       int(imgConfig.Quality),
+		Lossless:      false,
+		Compression:   9,
+	}
+	appConfig, err := models.GetHostUserConfig(string(ctx.Request().Host()), userId)
+	if err != nil {
+		return ctx.JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	log.Println("[appConfig]", utils.ToJsonString(appConfig, true))
+
+	var localMeta = models.LocalMeta{
+		Id:          utils.FormattedUUID(16),
+		FeatureId:   "default",
+		Origin:      "",
+		Remote:      false,
+		Ext:         utils.ParseFileExt(file),
+		Raw:         file,
+		RemoteLocal: file,
+		RequestUri:  postRequest.Path,
+		Size:        fileSize,
+	}
+	if !utils.IsDefaultObj(imgConfig, []string{"HttpAccept", "HttpUA", "Src"}) {
+		localMeta.FeatureId = utils.HashString(fmt.Sprintf("%v", imgConfig))[:6]
+	}
+
+	var dstFormat = utils.GetFileMIME(localMeta.Raw).Subtype
+	if len(imgConfig.Format) > 0 {
+		dstFormat = imgConfig.Format
+	}
+
+	var convertedFile = fmt.Sprintf("%s.%s.%s", localMeta.Raw, localMeta.FeatureId, dstFormat)
+
+	var requestLog = &models.RequestLog{
+		UserId:     appConfig.UserId,
+		ProxyId:    appConfig.ProxyId,
+		MetaId:     localMeta.Id,
+		RequestUrl: localMeta.RequestUri,
+		OriginUrl:  localMeta.Raw,
+		Referer:    ctx.Get("Referer"),
+		UA:         imgConfig.HttpUA,
+		Ip:         utils.GetClientIp(ctx),
+		IsCache:    0,
+		CreatedAt:  time.Now(),
+	}
+
+	if utils.FileExists(convertedFile) {
+		var _size = utils.FileSize(convertedFile)
+
+		go prepareShrinkLog(convertedFile, _size, 1, requestLog, &localMeta, &appConfig)
+
+		return ctx.JSON(fiber.Map{
+			"status": "ok",
+			"url":    convertedFile,
+			"size":   _size,
+			"rate":   utils.CompressRate(localMeta.Size, _size),
+			"time":   time.Now().Format("2006-01-02 15:04:05"),
+		})
+	}
+
+	imgConfig.XAutoRotate = true
+	_converted, _size, err := ConvertImage(
+		localMeta.Raw,
+		convertedFile,
+		dstFormat,
+		&imgConfig,
+		&exportConfig,
+	)
+	if err != nil {
+		return ctx.JSON(fiber.Map{
+			"error": "failed: " + err.Error(),
+		})
+	}
+
+	go prepareShrinkLog(convertedFile, _size, 0, requestLog, &localMeta, &appConfig)
 
 	return ctx.JSON(fiber.Map{
 		"status": "ok",
-		"file":   file,
-		"abs":    utils.AbsPath(file),
+		"url":    fmt.Sprintf("%s/%s/%s", strings.TrimRight(appConfig.OriginSite, "/"), strings.Trim(models.FAKE_FILE_PREFIX, "/"), strings.TrimLeft(_converted, "/")),
+		"path":   fmt.Sprintf("/%s/%s", strings.Trim(models.FAKE_FILE_PREFIX, "/"), strings.TrimLeft(_converted, "/")),
+		"size":   _size,
+		"rate":   utils.CompressRate(fileSize, _size),
 	})
 }
 

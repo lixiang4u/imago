@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/cespare/xxhash/v2"
 	"github.com/gofiber/fiber/v2/utils"
+	"path"
 	"reflect"
 	"slices"
 	"strings"
@@ -77,4 +78,8 @@ func FormattedUUID(length int) string {
 func FormatNickname(email string) string {
 	var tmpList = strings.Split(email, "@")
 	return tmpList[0]
+}
+
+func ParseFileExt(filepath string) string {
+	return strings.ToLower(strings.Trim(path.Ext(filepath), "."))
 }
