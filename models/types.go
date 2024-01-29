@@ -112,6 +112,6 @@ type SimpleFile struct {
 }
 
 type AdminCommand struct {
-	Command int         `json:"command" form:"command"`
-	Body    interface{} `json:"body" form:"body"`
+	Command int    `json:"command" form:"command"`
+	Body    string `json:"body" form:"body"` // JSON字符串
 }

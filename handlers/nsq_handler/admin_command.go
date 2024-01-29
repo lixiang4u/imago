@@ -40,9 +40,10 @@ func (x *AdminCommandHandler) HandleMessage(message *nsq.Message) error {
 func (x *AdminCommandHandler) FreeCache() {}
 
 func (x *AdminCommandHandler) cmdUpdateUserProxy(body interface{}) {
-	up, ok := body.(models.UserProxy)
-	if !ok {
-		log.Println("[cmdUpdateUserProxy] params type error")
+	var up models.UserProxy
+	err := json.Unmarshal([]byte(body.(string)), &up)
+	if err != nil {
+		log.Println("[cmdUpdateUserProxy] parseError", body)
 		return
 	}
 	models.LocalCache.Delete(models.GetHostCacheKey(up.Host))
