@@ -15,6 +15,11 @@ func StringMd5(str string) string {
 	return hex.EncodeToString(hash[:])
 }
 
+func BytesMd5(buf []byte) string {
+	hash := md5.Sum(buf)
+	return hex.EncodeToString(hash[:])
+}
+
 func PasswordHash(password string) string {
 	//log.Println("[debug.password]", StringMd5(fmt.Sprintf("%s,%s", models.SECRET_KEY, password)))
 	return StringMd5(fmt.Sprintf("%s,%s", models.SECRET_KEY, password))

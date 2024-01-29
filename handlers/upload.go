@@ -5,6 +5,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/lixiang4u/imago/models"
 	"github.com/lixiang4u/imago/utils"
+	"io"
 	"os"
 	"path"
 	"slices"
@@ -14,7 +15,18 @@ import (
 var imageMIMETypes = []string{"image/jpeg", "image/png", "image/gif", "image/webp", "image/bmp", "image/avif", "image/heif"}
 
 func Upload(ctx *fiber.Ctx) error {
-	//var userId = utils.TryParseUserId(ctx)
+	var userId = utils.TryParseUserId(ctx)
+	var count = models.IncrementWebShrinkCount(utils.GetClientIp(ctx))
+	if userId <= 0 && count >= int64(models.GuestUserShrinkCount) {
+		return ctx.JSON(fiber.Map{
+			"error": "访客每日处理图片已达上限",
+		})
+	}
+	if userId > 0 && count >= int64(models.WebUserShrinkCount) {
+		return ctx.JSON(fiber.Map{
+			"error": "每日处理图片已达上限",
+		})
+	}
 
 	fh, err := ctx.FormFile("file")
 	if err != nil {
@@ -49,6 +61,15 @@ func Upload(ctx *fiber.Ctx) error {
 	}
 	defer func() { _ = f.Close() }()
 
+	buf, err := io.ReadAll(f)
+	if err != nil {
+		return ctx.JSON(fiber.Map{
+			"error": "文件类型检测失败",
+			"debug": err.Error(),
+		})
+	}
+	var hash = utils.BytesMd5(buf)
+
 	// https://github.com/h2non/filetype
 	var mime = utils.GetReaderMIME(f)
 	if !slices.Contains(imageMIMETypes, mime.Value) {
@@ -69,5 +90,6 @@ func Upload(ctx *fiber.Ctx) error {
 		"name":   fh.Filename,
 		"size":   fh.Size,
 		"path":   savedFile,
+		"hash":   hash,
 	})
 }
