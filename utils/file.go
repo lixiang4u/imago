@@ -6,6 +6,7 @@ import (
 	"github.com/h2non/filetype"
 	"github.com/h2non/filetype/types"
 	"github.com/lixiang4u/imago/models"
+	"io"
 	"log"
 	"os"
 	"path"
@@ -122,5 +123,10 @@ func FileSize(fileName string) int64 {
 func GetFileMIME(fileName string) types.MIME {
 	buf, _ := os.ReadFile(fileName)
 	kind, _ := filetype.Match(buf)
+	return kind.MIME
+}
+
+func GetReaderMIME(reader io.Reader) types.MIME {
+	kind, _ := filetype.MatchReader(reader)
 	return kind.MIME
 }
