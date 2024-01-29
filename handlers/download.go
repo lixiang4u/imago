@@ -21,29 +21,17 @@ func Download(ctx *fiber.Ctx) error {
 	}
 	uploadRoot, err := filepath.Abs(path.Dir(models.UploadRoot))
 	if err != nil {
-		return ctx.JSON(fiber.Map{
-			"error": "上传目录配置异常",
-			"debug": err.Error(),
-		})
+		return ctx.JSON(respErrorDebug("上传目录配置异常", err.Error()))
 	}
 	requestFile, err := filepath.Abs(path.Join(path.Dir(models.UploadRoot), ctx.Params("*")))
 	if err != nil {
-		return ctx.JSON(fiber.Map{
-			"error": "文件不存在",
-			"debug": err.Error(),
-		})
+		return ctx.JSON(respErrorDebug("文件不存在", err.Error()))
 	}
 	if !strings.HasPrefix(requestFile, uploadRoot) {
-		return ctx.JSON(fiber.Map{
-			"error": "下载文件地址异常",
-			"debug": ctx.Params("*"),
-		})
+		return ctx.JSON(respErrorDebug("下载文件地址异常", ctx.Params("*")))
 	}
 	if utils.FileSize(requestFile) <= 0 {
-		return ctx.JSON(fiber.Map{
-			"error": "文件不存在",
-			"debug": ctx.Params("*"),
-		})
+		return ctx.JSON(respErrorDebug("文件不存在", ctx.Params("*")))
 	}
 	if isDownload {
 		return ctx.Download(requestFile, fileName)
@@ -62,10 +50,7 @@ func Archive(ctx *fiber.Ctx) error {
 
 	uploadRoot, err := filepath.Abs(path.Dir(models.UploadRoot))
 	if err != nil {
-		return ctx.JSON(fiber.Map{
-			"error": "上传目录配置异常",
-			"debug": err.Error(),
-		})
+		return ctx.JSON(respErrorDebug("上传目录配置异常", err.Error()))
 	}
 
 	var sourceFiles []models.SimpleFile
@@ -88,29 +73,20 @@ func Archive(ctx *fiber.Ctx) error {
 		sourceFiles = append(sourceFiles, file)
 	}
 	if len(sourceFiles) >= 100 {
-		return ctx.JSON(fiber.Map{
-			"error": "打包文件数过多",
-		})
+		return ctx.JSON(respError("打包文件数过多"))
 	}
 	if len(sourceFiles) <= 0 {
-		return ctx.JSON(fiber.Map{
-			"error": "打包文件不存在",
-		})
+		return ctx.JSON(respError("打包文件不存在"))
 	}
 
 	var zipFile = path.Join(os.TempDir(), fmt.Sprintf("imago_tmp_%d_%s.zip", time.Now().Unix(), utils.HashString(fmt.Sprintf("%d", time.Now().UnixNano()))[:8]))
 
 	n, err := utils.CreateZip(zipFile, sourceFiles)
 	if err != nil {
-		return ctx.JSON(fiber.Map{
-			"error": "打包失败",
-			"debug": err.Error(),
-		})
+		return ctx.JSON(respErrorDebug("打包失败", err.Error()))
 	}
 	if n <= 0 {
-		return ctx.JSON(fiber.Map{
-			"error": "打包文件列表异常",
-		})
+		return ctx.JSON(respError("打包文件列表异常"))
 	}
 	defer func() { _ = os.Remove(zipFile) }()
 

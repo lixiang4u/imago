@@ -23,7 +23,7 @@ func Debug(ctx *fiber.Ctx) error {
 		"Hostname": ctx.Hostname(),
 		"time":     time.Now().String(),
 		"UA":       string(ctx.Request().Header.Peek("User-Agent")),
-	}, ""))
+	}))
 }
 
 func UserRegister(ctx *fiber.Ctx) error {
@@ -35,16 +35,16 @@ func UserRegister(ctx *fiber.Ctx) error {
 
 	var registerRequest RegisterRequest
 	if err := ctx.BodyParser(&registerRequest); err != nil {
-		return ctx.JSON(respError("参数错误", nil))
+		return ctx.JSON(respError("参数错误"))
 	}
 	if len(registerRequest.Password) < 6 {
-		return ctx.JSON(respError("密码过于简单，请设置长度6位以上且包含特殊字符", nil))
+		return ctx.JSON(respError("密码过于简单，请设置长度6位以上且包含特殊字符"))
 	}
 	if models.IncrementUserRegister() > 200 {
 		return ctx.JSON(respError("注册火爆，请稍后", nil))
 	}
 	if _, err := models.GetLoginUser(registerRequest.Email); err == nil {
-		return ctx.JSON(respError("用户已存在", nil))
+		return ctx.JSON(respError("用户已存在"))
 	}
 	var u = models.User{
 		Nickname:  utils.FormatNickname(registerRequest.Email),
@@ -71,18 +71,18 @@ func UserLogin(ctx *fiber.Ctx) error {
 	var host = ctx.Hostname()
 
 	if err := ctx.BodyParser(&loginRequest); err != nil {
-		return ctx.JSON(respError("参数错误", nil))
+		return ctx.JSON(respError("参数错误"))
 	}
 	u, err := models.GetLoginUser(loginRequest.Email)
 	if err != nil {
-		return ctx.JSON(respError("用户名或者密码错误", nil))
+		return ctx.JSON(respError("用户名或者密码错误"))
 	}
 	if models.GetLoginErrorCount(u.Id) > 10 {
-		return ctx.JSON(respError("登录异常，稍后再试", nil))
+		return ctx.JSON(respError("登录异常，稍后再试"))
 	}
 	if u.Password != utils.PasswordHash(loginRequest.Password) {
 		models.IncrementLoginError(u.Id)
-		return ctx.JSON(respError("用户名或者密码错误", nil))
+		return ctx.JSON(respError("用户名或者密码错误"))
 	}
 	accessToken, err := utils.NewJwtAccessToken(u.Id, u.Nickname, host)
 	if err != nil {
@@ -147,10 +147,10 @@ func UserTokenRefresh(ctx *fiber.Ctx) error {
 	claims := (ctx.Locals("user").(*jwt.Token)).Claims.(jwt.MapClaims)
 	v, ok := claims["refresh"]
 	if !ok {
-		return ctx.JSON(respError("refresh_token错误", nil))
+		return ctx.JSON(respError("refresh_token错误"))
 	}
 	if len(v.(string)) == 0 {
-		return ctx.JSON(respError("refresh_token异常", nil))
+		return ctx.JSON(respError("refresh_token异常"))
 	}
 	var id = uint64(claims["id"].(float64))
 	var name = claims["name"].(string)
@@ -191,21 +191,21 @@ func CreateUserProxy(ctx *fiber.Ctx) error {
 	var err error
 	var postRequest PostRequest
 	if err := ctx.BodyParser(&postRequest); err != nil {
-		return ctx.JSON(respError("参数错误", nil))
+		return ctx.JSON(respError("参数错误"))
 	}
 	if postRequest.Origin, err = parseOrigin(postRequest.Origin); err != nil {
-		return ctx.JSON(respError(err.Error(), nil))
+		return ctx.JSON(respError(err.Error()))
 	}
 	postRequest.Host = parseOrNewHost(ctx)
 	if len(postRequest.Host) == 0 {
-		return ctx.JSON(respError("生成代理域名失败，请重试", nil))
+		return ctx.JSON(respError("生成代理域名失败，请重试"))
 	}
 	up, _ := models.GetHostUserProxy(postRequest.Host)
 	if up.Id > 0 && up.UserId != userId {
-		return ctx.JSON(respError("代理主机已存在", nil))
+		return ctx.JSON(respError("代理主机已存在"))
 	}
 	if models.GetUserProxyCount(userId) >= 10 {
-		return ctx.JSON(respError("代理数量超过限制", nil))
+		return ctx.JSON(respError("代理数量超过限制"))
 	}
 
 	up = models.UserProxy{
@@ -245,10 +245,10 @@ func UpdateUserProxy(ctx *fiber.Ctx) error {
 	var err error
 	var postRequest PostRequest
 	if err := ctx.BodyParser(&postRequest); err != nil {
-		return ctx.JSON(respError("参数错误", nil))
+		return ctx.JSON(respError("参数错误"))
 	}
 	if postRequest.Origin, err = parseOrigin(postRequest.Origin); err != nil {
-		return ctx.JSON(respError(err.Error(), nil))
+		return ctx.JSON(respError(err.Error()))
 	}
 
 	if err := models.DB().Model(&models.UserProxy{}).Where("id", id).Where("user_id", userId).Updates(map[string]interface{}{
@@ -288,7 +288,7 @@ func ListUserProxy(ctx *fiber.Ctx) error {
 	engine.Count(&pager.Total)
 	engine.Limit(pager.Limit).Offset(pager.Offset).Order("id desc").Find(&ups)
 
-	return ctx.JSON(respSuccessList(ups, pager, ""))
+	return ctx.JSON(respSuccessList(ups, pager))
 }
 
 func ListUserProxyRequestLog(ctx *fiber.Ctx) error {
@@ -314,7 +314,7 @@ func ListUserProxyRequestLog(ctx *fiber.Ctx) error {
 	engine.Count(&pager.Total)
 	engine.Limit(pager.Limit).Offset(pager.Offset).Order("id desc").Find(&logs)
 
-	return ctx.JSON(respSuccessList(logs, pager, ""))
+	return ctx.JSON(respSuccessList(logs, pager))
 }
 
 func ListUserProxyStat(ctx *fiber.Ctx) error {
