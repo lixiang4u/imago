@@ -75,10 +75,10 @@ func Process(ctx *fiber.Ctx) error {
 		go prepareShrinkLog(convertedFile, _size, 1, requestLog, &localMeta, &appConfig)
 
 		return ctx.JSON(respSuccess(fiber.Map{
-			"url":  convertedFile,
+			"url":  fmt.Sprintf("%s/%s/%s", strings.TrimRight(appConfig.OriginSite, "/"), strings.Trim(models.FAKE_FILE_PREFIX, "/"), strings.TrimLeft(convertedFile, "/")),
+			"path": fmt.Sprintf("/%s/%s", strings.Trim(models.FAKE_FILE_PREFIX, "/"), strings.TrimLeft(convertedFile, "/")),
 			"size": _size,
-			"rate": utils.CompressRate(localMeta.Size, _size),
-			"time": time.Now().Format("2006-01-02 15:04:05"),
+			"rate": utils.CompressRate(fileSize, _size),
 		}))
 	}
 
