@@ -462,7 +462,7 @@ func ListUserProxyProxyRequestStat(ctx *fiber.Ctx) error {
 func notifyUpdateUserProxy(proxy models.UserProxy) error {
 	buf, err := json.Marshal(models.AdminCommand{
 		Command: models.NsqCmd0x0010,
-		Body:    utils.ToJsonString(proxy, false),
+		Body:    utils.ToJsonBytes(proxy),
 	})
 	if err != nil {
 		return err

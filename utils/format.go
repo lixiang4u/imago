@@ -21,6 +21,12 @@ func ToJsonString(v interface{}, pretty bool) string {
 	return string(buf)
 }
 
+func ToJsonBytes(v interface{}) []byte {
+	var buf []byte
+	buf, _ = json.Marshal(v)
+	return buf
+}
+
 func HashString(data string) string {
 	return fmt.Sprintf("%x", xxhash.Sum64String(data))
 }

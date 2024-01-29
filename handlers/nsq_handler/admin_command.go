@@ -39,9 +39,9 @@ func (x *AdminCommandHandler) HandleMessage(message *nsq.Message) error {
 
 func (x *AdminCommandHandler) FreeCache() {}
 
-func (x *AdminCommandHandler) cmdUpdateUserProxy(body interface{}) {
+func (x *AdminCommandHandler) cmdUpdateUserProxy(body []byte) {
 	var up models.UserProxy
-	err := json.Unmarshal([]byte(body.(string)), &up)
+	err := json.Unmarshal(body, &up)
 	if err != nil {
 		log.Println("[cmdUpdateUserProxy] parseError", body)
 		return
