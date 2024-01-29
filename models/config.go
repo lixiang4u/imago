@@ -44,6 +44,18 @@ var (
 	LocalConfig LocalAppConfig
 )
 
+var (
+	NsqCmd0x0010 = 0x0010 // 后台更新用户代理触发
+	NsqCmd0x0020 = 0x0020
+	NsqCmd0x0030 = 0x0030
+	NsqCmd0x0040 = 0x0040
+	NsqCmd0x0050 = 0x0050
+	NsqCmd0x0060 = 0x0060
+	NsqCmd0x0070 = 0x0070
+	NsqCmd0x0080 = 0x0080
+	NsqCmd0x0090 = 0x0090
+)
+
 func init() {
 	if _, err := os.Stat("config.toml"); err != nil {
 		log.Println("file config.toml, ", err.Error())

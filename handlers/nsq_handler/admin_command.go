@@ -20,16 +20,16 @@ func (x *AdminCommandHandler) HandleMessage(message *nsq.Message) error {
 		return err
 	}
 	switch cmd.Command {
-	case 0x0010: // 后台更新用户代理触发
+	case models.NsqCmd0x0010:
 		x.cmdUpdateUserProxy(cmd.Body)
-	case 0x0020:
-	case 0x0030:
-	case 0x0040:
-	case 0x0050:
-	case 0x0060:
-	case 0x0070:
-	case 0x0080:
-	case 0x0090:
+	case models.NsqCmd0x0020:
+	case models.NsqCmd0x0030:
+	case models.NsqCmd0x0040:
+	case models.NsqCmd0x0050:
+	case models.NsqCmd0x0060:
+	case models.NsqCmd0x0070:
+	case models.NsqCmd0x0080:
+	case models.NsqCmd0x0090:
 	default:
 		log.Println("[command not match]", cmd.Command)
 	}
