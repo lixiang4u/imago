@@ -12,14 +12,10 @@ import (
 )
 
 func Process(ctx *fiber.Ctx) error {
-	type PostRequest struct {
-		Path string `json:"path" form:"path"`
-	}
+	var userId = utils.TryParseUserId(ctx)
+	var imgConfig = parseConfig(ctx)
 
-	var postRequest PostRequest
-	_ = ctx.BodyParser(&postRequest)
-
-	var file = filepath.Join(models.UploadRoot, "../", postRequest.Path)
+	var file = filepath.Join(models.UploadRoot, "../", imgConfig.Src)
 	if !strings.HasPrefix(utils.AbsPath(file), utils.AbsPath(models.UploadRoot)) {
 		return ctx.JSON(respError("图片不存在"))
 	}
@@ -28,8 +24,6 @@ func Process(ctx *fiber.Ctx) error {
 		return ctx.JSON(respError("图片不存在"))
 	}
 
-	var userId = utils.TryParseUserId(ctx)
-	var imgConfig = parseConfig(ctx)
 	var exportConfig = models.ExportConfig{
 		StripMetadata: true,
 		Quality:       int(imgConfig.Quality),
@@ -51,7 +45,7 @@ func Process(ctx *fiber.Ctx) error {
 		Ext:         utils.ParseFileExt(file),
 		Raw:         file,
 		RemoteLocal: file,
-		RequestUri:  postRequest.Path,
+		RequestUri:  imgConfig.Src,
 		Size:        fileSize,
 	}
 	if !utils.IsDefaultObj(imgConfig, []string{"HttpAccept", "HttpUA", "Src"}) {
