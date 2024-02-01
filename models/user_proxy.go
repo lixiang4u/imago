@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -50,8 +49,8 @@ func CreateDefaultUserProxy(userId uint64, host string) UserProxy {
 	var m = UserProxy{
 		UserId:    userId,
 		Title:     "默认代理",
-		Origin:    fmt.Sprintf("%d@%s", userId, host),
-		Host:      fmt.Sprintf("%d@%s", userId, host),
+		Origin:    host,
+		Host:      host,
 		Quality:   80,
 		UserAgent: "",
 		Cors:      "",

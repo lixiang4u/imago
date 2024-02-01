@@ -19,14 +19,6 @@ func Index(ctx *fiber.Ctx) error {
 	return ctx.JSON(respSuccess(nil, "ok"))
 }
 
-func Debug(ctx *fiber.Ctx) error {
-	return ctx.JSON(respSuccess(fiber.Map{
-		"Hostname": ctx.Hostname(),
-		"time":     time.Now().String(),
-		"UA":       string(ctx.Request().Header.Peek("User-Agent")),
-	}))
-}
-
 func UserRegister(ctx *fiber.Ctx) error {
 	type RegisterRequest struct {
 		Nickname string `json:"nickname" form:"nickname"`
