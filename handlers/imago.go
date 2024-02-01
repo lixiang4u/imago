@@ -10,9 +10,12 @@ import (
 	"os"
 	"path"
 	"runtime"
+	"slices"
 	"sync"
 	"time"
 )
+
+var defaultUrl = []string{"", "/"}
 
 func init() {
 	vips.Startup(&vips.Config{
@@ -50,6 +53,9 @@ func Image(ctx *fiber.Ctx) error {
 		return ctx.JSON(fiber.Map{
 			"error": err.Error(),
 		})
+	}
+	if slices.Contains(defaultUrl, string(ctx.Request().RequestURI())) {
+		return ctx.SendString("欢迎使用本图片代理：https://imago.artools.cc")
 	}
 	localMeta, err := HandleToLocalPath(ctx, &imgConfig, &appConfig)
 	if err != nil {
