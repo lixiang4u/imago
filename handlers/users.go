@@ -127,12 +127,11 @@ func parseOrNewHost(ctx *fiber.Ctx) string {
 	if len(tmpList) <= 1 {
 		return ""
 	}
-	var r = utils.HashString(fmt.Sprintf("%d,%d", time.Now().UnixNano(), rand.Int()))[:6]
-	if len(tmpList) == 2 {
-		tmpList = append([]string{r}, tmpList...)
-	} else {
-		tmpList[0] = r
+	if strings.ToLower(tmpList[0]) == "www" {
+		tmpList = tmpList[1:]
 	}
+	var r = utils.HashString(fmt.Sprintf("%d,%d", time.Now().UnixNano(), rand.Int()))[:6]
+	tmpList = append([]string{r}, tmpList...)
 	return strings.Join(tmpList, ".")
 }
 
