@@ -1,7 +1,7 @@
 # 图片压缩
 
 
-## 部分环境配置命令
+## 部分环境配置命令参考
 
 ```code
 
@@ -65,3 +65,84 @@ tar -zxf nsq-1.2.1.linux-amd64.go1.16.6.tar.gz
 
 
 ```
+
+
+
+## 部分nginx配置参考
+
+> 主域名配置
+
+```code
+    server {
+        listen       443 ssl;
+        server_name  imago.artools.cc;
+
+        ssl_certificate      /etc/letsencrypt/live/imago.artools.cc/fullchain.pem;
+        ssl_certificate_key  /etc/letsencrypt/live/imago.artools.cc/privkey.pem;
+
+        ssl_session_cache    shared:SSL:1m;
+        ssl_session_timeout  5m;
+
+        ssl_ciphers  HIGH:!aNULL:!MD5;
+        ssl_prefer_server_ciphers  on;
+
+        root /opt/repo/imago-h5/dist;
+
+        location / {
+            index  index.html index.htm;
+            try_files $uri $uri/ /index.html;
+        }
+
+        location /api {
+            rewrite ^/api/(.*)$ /$1 break;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header Host $http_host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header Connection "";
+            proxy_http_version 1.1;
+
+            proxy_pass http://127.0.0.1:8060;
+        }
+
+    }
+```
+
+> 泛域名配置
+
+```code
+
+    server {
+        listen       443 ssl;
+        server_name  *.imago.artools.cc;
+
+        ssl_certificate      /etc/letsencrypt/live/imago.artools.cc-0001/fullchain.pem;
+        ssl_certificate_key  /etc/letsencrypt/live/imago.artools.cc-0001/privkey.pem;
+
+        ssl_session_cache    shared:SSL:1m;
+        ssl_session_timeout  5m;
+
+        ssl_ciphers  HIGH:!aNULL:!MD5;
+        ssl_prefer_server_ciphers  on;
+
+        root /opt/repo/imago-h5/dist;
+
+        #location / {
+        #    index  index.html index.htm;
+        #    try_files $uri $uri/ /index.html;
+        #}
+
+        location / {
+            rewrite ^/(.*)$ /$1 break;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header Host $http_host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header Connection "";
+            proxy_http_version 1.1;
+
+            proxy_pass http://127.0.0.1:8020;
+        }
+
+    }
+```
+
+
