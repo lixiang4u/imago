@@ -24,12 +24,8 @@ func GetHostUserConfig(ctx *fiber.Ctx, userId ...uint64) (AppConfig, error) {
 		return v.(AppConfig), nil
 	}
 
-	var newOrigin string
-	if ctx.Secure() {
-		newOrigin = "https://" + host
-	} else {
-		newOrigin = "http://" + host
-	}
+	//  这里走的是代理，所以无法判断出正确的前端请求protocol
+	var newOrigin = "https://" + host
 
 	up, err := GetHostUserProxy(host, userId...)
 	if err != nil {
