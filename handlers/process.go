@@ -29,7 +29,7 @@ func Process(ctx *fiber.Ctx) error {
 		Lossless:      false,
 		Compression:   9,
 	}
-	appConfig, err := models.GetHostUserConfig(string(ctx.Request().Host()), userId)
+	appConfig, err := models.GetHostUserConfig(ctx, userId)
 	if err != nil {
 		return ctx.JSON(respErrorDebug("系统错误", err.Error()))
 	}

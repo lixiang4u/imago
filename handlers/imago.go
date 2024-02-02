@@ -48,7 +48,7 @@ func Image(ctx *fiber.Ctx) error {
 	var now = time.Now()
 	var imgConfig = parseConfig(ctx)
 	var appConfig models.AppConfig
-	appConfig, err := models.GetHostUserConfig(string(ctx.Request().Host()))
+	appConfig, err := models.GetHostUserConfig(ctx)
 	if err != nil {
 		return ctx.JSON(fiber.Map{
 			"error": err.Error(),

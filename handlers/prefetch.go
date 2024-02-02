@@ -66,9 +66,10 @@ func loadLocalPrefetchList() []string {
 func Prefetch() error {
 	log.Println("[prefetch run]")
 
+	var ctx = fiber.Ctx{}
 	var imgConfig = &models.ImageConfig{}
 	var appConfig models.AppConfig
-	appConfig, _ = models.GetHostUserConfig(models.Empty)
+	appConfig, _ = models.GetHostUserConfig(&ctx)
 
 	var exportConfig = &models.ExportConfig{
 		StripMetadata: true,
