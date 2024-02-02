@@ -3,6 +3,7 @@ package models
 import (
 	"errors"
 	"fmt"
+	"github.com/gofiber/fiber/v2"
 	"github.com/patrickmn/go-cache"
 	"strings"
 	"time"
@@ -15,22 +16,30 @@ func GetHostCacheKey(host string, userId ...uint64) string {
 	return host
 }
 
-func GetHostUserConfig(host string, userId ...uint64) (AppConfig, error) {
+func GetHostUserConfig(ctx *fiber.Ctx, userId ...uint64) (AppConfig, error) {
+	var host = string(ctx.Request().Host())
 	host = GetHostCacheKey(host, userId...)
 	v, ok := LocalCache.Get(host)
 	if ok {
 		return v.(AppConfig), nil
 	}
 
+	var newOrigin string
+	if ctx.Secure() {
+		newOrigin = "https://" + host
+	} else {
+		newOrigin = "http://" + host
+	}
+
 	up, err := GetHostUserProxy(host, userId...)
 	if err != nil {
 		// 指定用户，但是用户ID为真（普通用户）
 		if len(userId) > 0 && userId[0] > 0 {
-			up = CreateDefaultUserProxy(userId[0], host) // 创建用户默认代理
+			up = CreateDefaultUserProxy(userId[0], newOrigin, host) // 创建用户默认代理
 		}
 		// 指定用户，但是用户ID为0（Guest用户）
 		if len(userId) > 0 && userId[0] <= 0 {
-			return AppConfig{UserId: 0, ProxyId: 0, OriginSite: host, ProxyHost: host}, nil
+			return AppConfig{UserId: 0, ProxyId: 0, OriginSite: newOrigin, ProxyHost: host}, nil
 		}
 	}
 	if up.Id <= 0 {

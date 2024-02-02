@@ -45,11 +45,11 @@ func GetUserProxyCount(userId uint64) int64 {
 	return count
 }
 
-func CreateDefaultUserProxy(userId uint64, host string) UserProxy {
+func CreateDefaultUserProxy(userId uint64, origin, host string) UserProxy {
 	var m = UserProxy{
 		UserId:    userId,
 		Title:     "默认代理",
-		Origin:    host,
+		Origin:    origin,
 		Host:      host,
 		Quality:   80,
 		UserAgent: "",
