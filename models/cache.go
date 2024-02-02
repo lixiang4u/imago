@@ -35,6 +35,8 @@ func GetHostUserConfig(ctx *fiber.Ctx, userId ...uint64) (AppConfig, error) {
 		}
 		// 指定用户，但是用户ID为0（Guest用户）
 		if len(userId) > 0 && userId[0] <= 0 {
+			// 添加系统级默认代理，防止每次都查询不到数据库
+			go CreateDefaultUserProxy(0, newOrigin, host)
 			return AppConfig{UserId: 0, ProxyId: 0, OriginSite: newOrigin, ProxyHost: host}, nil
 		}
 	}
