@@ -22,7 +22,7 @@ func main() {
 
 	app := fiber.New()
 	//app.Use(etag.New(etag.Config{Weak: true}))
-	app.Get("/*", handlers.Image)
+	app.Get("/*", handlers.R(handlers.Image))
 
 	log.Fatal(app.Listen(":8020"))
 
